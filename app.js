@@ -5,7 +5,7 @@ const EventEmitter = require('events');
 
 const { NestClient, subscribeObjects, mergeBuckets } = require('./lib/nest-client');
 const { NestAuthError } = require('./lib/nest-auth');
-const { parseTopaz } = require('./lib/topaz');
+const { parseTopaz, alarms, combinedAlarms } = require('./lib/topaz');
 const { buildWhereMap, deviceLabel, whereIdOf } = require('./lib/where');
 const {
   SETTING_ISSUE_TOKEN, SETTING_COOKIE, readSettings, validate, backoffMs,
@@ -87,6 +87,12 @@ class NestProtectApp extends Homey.App {
     this._stopped = false;
     this._launchedAt = 0;
     this._reauths = 0;
+    // Samlet alarmtilstand for hele huset. Ukjent til første henting, av
+    // samme grunn som _connected: uten det ville den aller første avlesningen
+    // sett ut som en overgang, og «gikk ut av alarm» hadde fyrt ved hver
+    // oppstart — midt i en pågående alarm ville det stanset flowen som
+    // håndterte den.
+    this._anyAlarms = null;
 
     this.registerFlowCards();
 
@@ -168,6 +174,9 @@ class NestProtectApp extends Homey.App {
     this._states = new Map();
     this._whereMap = new Map();
     this._lastUpdate = null;
+    // Ny konto, ny grunnlinje. Å ta med seg forrige kontos alarmtilstand hit
+    // ville laget en overgang som aldri skjedde.
+    this._anyAlarms = null;
     this.protect.emit('states', this._states);
     if (this._abort) this._abort.abort();
     // Nye verdier skal virke med en gang, ikke etter at et halvtimes
@@ -333,7 +342,44 @@ class NestProtectApp extends Homey.App {
     }
 
     this._lastUpdate = new Date().toISOString();
+    this._applyAnyAlarms();
     this.protect.emit('states', this._states);
+  }
+
+  // «En eller annen varsler» vurderes her, ikke per enhet. Sju enheter som
+  // hver for seg skulle blitt enige om hvem som var sist ute ville krevd at de
+  // snakket sammen; appen ser hele huset i én oversikt allerede.
+  _applyAnyAlarms() {
+    const entries = [...this._states.values()];
+    const current = combinedAlarms(entries.map(({ state }) => state));
+
+    // Første avlesning er et utgangspunkt, ikke en hendelse.
+    if (this._anyAlarms === null) {
+      this._anyAlarms = current;
+      return;
+    }
+
+    for (const hazard of ['smoke', 'co', 'heat', 'any']) {
+      const before = this._anyAlarms[hazard];
+      const now = current[hazard];
+
+      if (now === true && before === false) {
+        // Navnet på en varsler som faktisk uler nå. Er de flere, er det
+        // vilkårlig hvilken — kortet handler om huset, ikke om enheten.
+        const source = entries.find(({ state }) => alarms(state)[hazard] === true);
+        this._anyStarted
+          .trigger({ device_name: (source && source.label) || '' }, { hazard })
+          .catch((error) => this.error('Kunne ikke utløse samlet alarmkort', error));
+      } else if (now === false && before === true) {
+        this._anyStopped
+          .trigger({}, { hazard })
+          .catch((error) => this.error('Kunne ikke utløse samlet friskmelding', error));
+      }
+
+      // Ukjent nå betyr at vi beholder det vi visste sist, slik at et hull i
+      // dataene ikke i seg selv blir en overgang neste runde.
+      if (now !== null) this._anyAlarms[hazard] = now;
+    }
   }
 
   states() {
@@ -462,6 +508,15 @@ class NestProtectApp extends Homey.App {
     // brukes — ikke etter manifestet. Som vanlig trigger blir signaturen
     // trigger(tokens, state), så enheten havnet i tokens, state ble tomt, og
     // farevalget forsvant. Kortet kunne dermed aldri fyre, stille.
+    // Vanlige triggere, ikke device-triggere: kortene har ikke noe
+    // device-argument, fordi hele poenget er at det er likegyldig hvilken
+    // varsler det er.
+    this._anyStarted = this.homey.flow.getTriggerCard('any_alarm_started');
+    this._anyStarted.registerRunListener((args, state) => args.hazard === state.hazard);
+
+    this._anyStopped = this.homey.flow.getTriggerCard('any_alarm_stopped');
+    this._anyStopped.registerRunListener((args, state) => args.hazard === state.hazard);
+
     this._warningTrigger = this.homey.flow.getDeviceTriggerCard('hazard_warning');
     this._warningTrigger.registerRunListener(
       (args, state) => args.hazard === state.hazard,

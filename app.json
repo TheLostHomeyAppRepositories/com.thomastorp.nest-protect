@@ -1,6 +1,6 @@
 {
   "id": "com.thomastorp.nest-protect",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "compatibility": ">=12.2.0",
   "sdk": 3,
   "platforms": [
@@ -115,6 +115,130 @@
   },
   "flow": {
     "triggers": [
+      {
+        "id": "any_alarm_started",
+        "title": {
+          "en": "Any Nest Protect started alarming",
+          "no": "En eller annen Nest Protect gikk i alarm"
+        },
+        "titleFormatted": {
+          "en": "Any Nest Protect alarms for [[hazard]]",
+          "no": "En eller annen Nest Protect går i alarm for [[hazard]]"
+        },
+        "hint": {
+          "en": "Fires once when the house goes from nothing alarming to something alarming, no matter which unit it is. It does not fire again while another alarm is already sounding, so it starts an automation once rather than restarting it per unit.",
+          "no": "Fyrer én gang når huset går fra ingen alarm til alarm, uansett hvilken varsler det er. Den fyrer ikke på nytt mens en annen alarm allerede uler, så den starter en automasjon én gang i stedet for på nytt per varsler."
+        },
+        "tokens": [
+          {
+            "name": "device_name",
+            "type": "string",
+            "title": {
+              "en": "Nest Protect",
+              "no": "Nest Protect"
+            },
+            "example": {
+              "en": "Hallway",
+              "no": "Gang"
+            }
+          }
+        ],
+        "args": [
+          {
+            "name": "hazard",
+            "type": "dropdown",
+            "title": {
+              "en": "Hazard",
+              "no": "Fare"
+            },
+            "values": [
+              {
+                "id": "smoke",
+                "title": {
+                  "en": "smoke",
+                  "no": "røyk"
+                }
+              },
+              {
+                "id": "co",
+                "title": {
+                  "en": "carbon monoxide",
+                  "no": "karbonmonoksid"
+                }
+              },
+              {
+                "id": "heat",
+                "title": {
+                  "en": "heat",
+                  "no": "varme"
+                }
+              },
+              {
+                "id": "any",
+                "title": {
+                  "en": "any alarm",
+                  "no": "hva som helst"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      {
+        "id": "any_alarm_stopped",
+        "title": {
+          "en": "The last Nest Protect stopped alarming",
+          "no": "Siste Nest Protect gikk ut av alarm"
+        },
+        "titleFormatted": {
+          "en": "No Nest Protect is alarming for [[hazard]] any more",
+          "no": "Ingen Nest Protect er lenger i alarm for [[hazard]]"
+        },
+        "hint": {
+          "en": "Fires when no unit is alarming any more, not when one of several clears. That is the difference between stopping an automation because it is over and stopping it while another room is still sounding.",
+          "no": "Fyrer når ingen varsler er i alarm lenger, ikke når én av flere gir seg. Det er forskjellen på å stanse en automasjon fordi det er over, og å stanse den mens et annet rom fortsatt uler."
+        },
+        "args": [
+          {
+            "name": "hazard",
+            "type": "dropdown",
+            "title": {
+              "en": "Hazard",
+              "no": "Fare"
+            },
+            "values": [
+              {
+                "id": "smoke",
+                "title": {
+                  "en": "smoke",
+                  "no": "røyk"
+                }
+              },
+              {
+                "id": "co",
+                "title": {
+                  "en": "carbon monoxide",
+                  "no": "karbonmonoksid"
+                }
+              },
+              {
+                "id": "heat",
+                "title": {
+                  "en": "heat",
+                  "no": "varme"
+                }
+              },
+              {
+                "id": "any",
+                "title": {
+                  "en": "any alarm",
+                  "no": "hva som helst"
+                }
+              }
+            ]
+          }
+        ]
+      },
       {
         "id": "hazard_warning",
         "title": {
