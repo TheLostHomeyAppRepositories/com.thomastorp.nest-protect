@@ -5,7 +5,7 @@
     "missingCookie": "Cookien mangler. Kopier den fra nettleseren slik det står beskrevet i appinnstillingene.",
     "badCookie": "Denne cookien har ingen __Secure-3PSID-verdi, og det er den økten hviler på.",
     "brokenCookie": "Cookien inneholder et linjeskift eller kontrolltegn, som regel fordi innlimingen ble avkortet. Kopier hele cookie-verdien på nytt, som én linje.",
-    "notConfigured": "Legg inn issue token og cookie i appinnstillingene først.",
+    "notConfigured": "Nest Protect er ikke satt opp ennå. Åpne innstillingene for denne appen i Homey (under Apper), lim inn de to verdiene fra nettleseren slik det står beskrevet der, og legg så til enhetene på nytt.",
     "pairNoConnection": "Homey får ikke kontakt med Nest akkurat nå. Sjekk internettforbindelsen, og at issue token og cookie i appinnstillingene fortsatt er gyldige.",
     "noDevices": "Fant ingen Nest Protect på denne kontoen.",
     "disconnected": "Ingen forbindelse til Nest.",

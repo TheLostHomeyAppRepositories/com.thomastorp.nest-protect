@@ -61,6 +61,13 @@ class ProtectDriver extends Homey.Driver {
 
   async onPairListDevices() {
     const app = this.homey.app;
+
+    // Uten innstillinger finnes det ingenting å vente på. Første utgave ventet
+    // likevel hele tidsavbruddet før den sa fra, så de som prøvde å legge til
+    // enheter før oppsettet satt og så på en spinner i 30 sekunder — og fikk
+    // beskjeden først da de trodde appen hadde hengt seg.
+    if (!app.status().configured) throw new Error(this.homey.__('error.notConfigured'));
+
     const states = await this._waitForStates(app);
 
     if (states.size === 0) throw new Error(this._explainEmpty(app));
