@@ -10,5 +10,9 @@
   "1.2.0": {
     "en": "Adds two flow cards that treat the house as a whole rather than one alarm at a time. One fires when any Nest Protect starts alarming, and tells you which one; the other fires when the last one stops, so an automation is not called off while another room is still sounding. Both cover smoke, carbon monoxide, heat, or any of them.",
     "no": "Legger til to flytkort som ser huset under ett i stedet for én varsler av gangen. Det ene fyrer når en eller annen Nest Protect går i alarm, og forteller hvilken; det andre fyrer når den siste gir seg, slik at en automasjon ikke blir avblåst mens et annet rom fortsatt uler. Begge dekker røyk, karbonmonoksid, varme eller hva som helst."
+  },
+  "1.2.1": {
+    "en": "Adding devices before the app is set up now tells you straight away what is missing and where to fix it, instead of waiting half a minute first. The app description also makes clear that a one-time setup on a computer is needed before any Nest Protect can be added.",
+    "no": "Prøver du å legge til enheter før appen er satt opp, får du nå med en gang vite hva som mangler og hvor du fikser det, i stedet for å vente en halv minutt først. Beskrivelsen av appen gjør det også tydelig at det trengs et engangsoppsett på datamaskin før noen Nest Protect kan legges til."
   }
 }
