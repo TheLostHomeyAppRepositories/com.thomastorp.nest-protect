@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Nest Protect for Homey</title>
+<style>
+  body { font: 13px/1.5 system-ui, sans-serif; width: 340px; margin: 0; padding: 14px 16px; color: #1c1c1c; }
+  h1 { font-size: 15px; font-weight: 600; margin: 0 0 8px; }
+  p { margin: 0 0 10px; }
+  ol { margin: 0 0 10px; padding-left: 18px; }
+  button { font: inherit; padding: 6px 10px; border-radius: 6px; border: 1px solid #c8c8c8; background: #fff; cursor: pointer; }
+  button.primary { background: #00afd8; border-color: #00afd8; color: #fff; }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin: 8px 0; }
+  .label { font-weight: 600; }
+  .muted { color: #6b6b6b; font-size: 12px; }
+  .warn { background: #fff4e0; border-radius: 6px; padding: 8px 10px; font-size: 12px; margin: 10px 0; }
+  .error { color: #b3261e; }
+  .ok { color: #1b7f3b; }
+</style>
+</head>
+<body>
+<h1>Nest Protect for Homey</h1>
+
+<section id="waiting" hidden>
+  <ol>
+    <li>Open home.nest.com and sign in with Google.</li>
+    <li>Once your home has loaded, open this window again.</li>
+  </ol>
+  <button class="primary" id="open">Open home.nest.com</button>
+  <p class="muted" style="margin-top:10px">Already signed in? Reload the Nest page, then open this window again.</p>
+</section>
+
+<section id="ready" hidden>
+  <p class="ok">Found your sign-in. Paste these into the app settings in Homey.</p>
+  <div class="row"><span class="label">1. Issue token</span><button id="copyToken">Copy</button></div>
+  <div class="row"><span class="label">2. Cookie</span><button id="copyCookie">Copy</button></div>
+  <p id="status" class="muted">&nbsp;</p>
+  <div class="warn">The cookie gives full access to your Google account. Only paste it into Homey, and don't sign out of Google in this browser, or it stops working.</div>
+  <button id="clear">Forget these values</button>
+</section>
+
+<p id="problem" class="error" hidden></p>
+
+<script src="shared.js"></script>
+<script src="popup.js"></script>
+</body>
+</html>
