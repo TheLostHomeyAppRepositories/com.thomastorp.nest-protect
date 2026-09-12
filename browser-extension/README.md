@@ -13,6 +13,11 @@ don't have to dig through the developer tools.
   browser would send to `accounts.google.com/o/oauth2/iframe`, which is exactly
   what the app imitates.
 
+It asks for access to `google.com` as well as `accounts.google.com` because
+Chrome only hands an extension the cookies for domains it has permission for,
+and the sign-in cookies live on `.google.com`. Without it, the session cookie
+the app depends on is invisible to the extension.
+
 Nothing is sent anywhere. The extension makes no network requests of its own,
 the issue token is kept in memory only and forgotten when Chrome closes, and
 the cookie is read fresh each time you copy it.

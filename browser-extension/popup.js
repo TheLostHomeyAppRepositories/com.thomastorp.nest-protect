@@ -12,6 +12,13 @@
     return cookieHeader(cookies);
   }
 
+  // Bare navn, aldri verdier. Når økt-cookien mangler, er det dette som skiller
+  // «ikke logget inn» fra «utvidelsen får ikke lov til å se den».
+  async function cookieNames() {
+    const cookies = await chrome.cookies.getAll({ url: COOKIE_URL });
+    return cookies.map((c) => `${c.name} (${c.domain})`);
+  }
+
   function problem(text) {
     $('problem').textContent = text;
     $('problem').hidden = !text;
@@ -33,12 +40,16 @@
       return;
     }
 
-    // Tokenet uten cookie er ubrukelig, og da er det utlogging som er
-    // problemet — ikke at siden ikke har lastet.
+    // Tokenet ble fanget, så siden har lastet og brukeren er logget inn. Mangler
+    // økt-cookien likevel, er det ikke utlogging som er problemet. Første utgave
+    // sa det, og tok feil: utvidelsen manglet tillatelse til .google.com, der
+    // innloggingscookiene ligger, og fikk bare dem som ligger på accounts-domenet.
     if (!hasSessionCookie(cookie)) {
       $('waiting').hidden = false;
       $('ready').hidden = true;
-      problem('You don\'t seem to be signed in to Google in this browser. Sign in on home.nest.com and try again.');
+      const names = await cookieNames();
+      problem(`Couldn't read the Google session cookie. Found ${names.length} cookie(s): `
+        + `${names.join(', ') || 'none'}.`);
       return;
     }
 
