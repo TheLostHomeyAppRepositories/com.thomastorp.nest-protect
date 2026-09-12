@@ -22,7 +22,7 @@
     "step2": "Åpne DevTools med F12 og gå til Network-fanen.",
     "step3": "Ser du ingen issueToken-forespørsel i steg 5, er siden fortsatt innlogget. Åpne Application-fanen, velg Storage, trykk Clear site data, og gå så tilbake til Network.",
     "step4": "Huk av Preserve log, og last siden på nytt med Ctrl+Shift+R (en full ny lasting).",
-    "step5": "Filtrer på issueToken. Høyreklikk forespørselen, velg Copy, deretter Copy as cURL, og lim inn i feltet øverst.",
+    "step5": "Filtrer på iframerpc. Blant resultatene, finn forespørselen der URL-en inneholder action=issueToken, høyreklikk den, velg Copy, deretter Copy as cURL, og lim inn i feltet øverst.",
     "saving": "Lagrer…",
     "save": "Lagre",
     "test": "Test forbindelsen",
@@ -50,7 +50,8 @@
     "curlPlaceholder": "Høyreklikk issueToken-forespørselen i DevTools → Copy → Copy as cURL, og lim inn her",
     "curlOk": "Fylte ut de to feltene under. Test forbindelsen nå.",
     "curlMiss": "Fant ikke begge verdiene i innlimingen. Sjekk at du kopierte issueToken-forespørselen som cURL.",
-    "step6": "Lukk fanen etterpå, men ikke logg ut av Google. Logger du ut, slutter cookien å virke."
+    "step6": "Lukk fanen etterpå, men ikke logg ut av Google. Logger du ut, slutter cookien å virke.",
+    "extension": "Tips: Chrome-utvidelsen «Nest Protect for Homey — setup helper» gjør kopieringen under for deg. Søk den opp i Chrome Web Store."
   },
   "pair": {
     "repairTitle": "Koble til Nest på nytt",
@@ -71,7 +72,7 @@
     "step2": "Åpne DevTools med F12 og gå til Network-fanen.",
     "step3": "Ser du ingen issueToken-forespørsel i steg 5, er siden fortsatt innlogget. Åpne Application-fanen, velg Storage, trykk Clear site data, og gå så tilbake til Network.",
     "step4": "Huk av Preserve log, og last siden på nytt med Ctrl+Shift+R (en full ny lasting).",
-    "step5": "Filtrer på issueToken. Høyreklikk forespørselen, velg Copy, deretter Copy as cURL, og lim inn i feltet øverst.",
+    "step5": "Filtrer på iframerpc. Blant resultatene, finn forespørselen der URL-en inneholder action=issueToken, høyreklikk den, velg Copy, deretter Copy as cURL, og lim inn i feltet øverst.",
     "curlLabel": "Lim inn fra Chrome (enklest)",
     "curlPlaceholder": "Høyreklikk issueToken-forespørselen i DevTools → Copy → Copy as cURL, og lim inn her",
     "curlOk": "Fylte ut de to feltene under. Test forbindelsen nå.",

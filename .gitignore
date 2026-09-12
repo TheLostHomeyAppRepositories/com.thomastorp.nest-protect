@@ -7,3 +7,6 @@ env.json
 # Google-øktcookien hører aldri hjemme i repoet.
 credentials.txt
 lib/credentials.js
+
+# Chrome-utvidelsens opplastingspakke bygges ved behov
+browser-extension/*.zip
