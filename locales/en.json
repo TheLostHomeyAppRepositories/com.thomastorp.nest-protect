@@ -18,11 +18,11 @@
     "cookie": "Cookie",
     "warning": "The cookie is a full Google account session credential, not a Nest-only token. Keep it out of screenshots and bug reports.",
     "howto": "How to get these values",
-    "step1": "Open home.nest.com in Chrome and sign in with Google.",
-    "step2": "Open DevTools with F12, go to the Network tab, tick Preserve log, then reload the page.",
-    "step3": "Filter for issueToken. Open that request and copy its full Request URL into the first field above.",
-    "step4": "Filter for oauth2/iframe. Under Request Headers, copy the entire cookie value into the second field above.",
-    "step5": "Close the tab, but do not sign out of Google. Signing out invalidates the cookie.",
+    "step1": "On a computer, open home.nest.com in Chrome and sign in with Google.",
+    "step2": "Open DevTools with F12 and go to the Network tab.",
+    "step3": "If you see no issueToken request in step 5, the page is still signed in. Open the Application tab, choose Storage, click Clear site data, then come back to Network.",
+    "step4": "Tick Preserve log, then reload the page.",
+    "step5": "Filter for issueToken. Right-click that request, choose Copy, then Copy as cURL, and paste it into the field at the top.",
     "saving": "Saving…",
     "save": "Save",
     "test": "Test connection",
@@ -45,7 +45,12 @@
     "ok": "OK",
     "failed": "Failed",
     "wired": "mains",
-    "battery": "battery"
+    "battery": "battery",
+    "curlLabel": "Paste from Chrome (easiest)",
+    "curlPlaceholder": "Right-click the issueToken request in DevTools → Copy → Copy as cURL, then paste it here",
+    "curlOk": "Filled in the two fields below. Now test the connection.",
+    "curlMiss": "Couldn't find both values in that paste. Check you copied the issueToken request as cURL.",
+    "step6": "Close the tab afterwards, but do not sign out of Google. Signing out invalidates the cookie."
   },
   "pair": {
     "repairTitle": "Reconnect to Nest",
@@ -62,10 +67,15 @@
     "saved": "Saved. Reconnecting…",
     "scriptError": "Something went wrong in this view: ",
     "howto": "How to get a new cookie",
-    "step1": "Open home.nest.com in Chrome and sign in with Google.",
-    "step2": "Open DevTools with F12, go to the Network tab, tick Preserve log, then reload the page.",
-    "step3": "Filter for issueToken. Open that request and copy its full Request URL into the first field above.",
-    "step4": "Filter for oauth2/iframe. Under Request Headers, copy the entire cookie value into the second field above.",
-    "step5": "Close the tab, but do not sign out of Google. Signing out invalidates the cookie."
+    "step1": "On a computer, open home.nest.com in Chrome and sign in with Google.",
+    "step2": "Open DevTools with F12 and go to the Network tab.",
+    "step3": "If you see no issueToken request in step 5, the page is still signed in. Open the Application tab, choose Storage, click Clear site data, then come back to Network.",
+    "step4": "Tick Preserve log, then reload the page.",
+    "step5": "Filter for issueToken. Right-click that request, choose Copy, then Copy as cURL, and paste it into the field at the top.",
+    "curlLabel": "Paste from Chrome (easiest)",
+    "curlPlaceholder": "Right-click the issueToken request in DevTools → Copy → Copy as cURL, then paste it here",
+    "curlOk": "Filled in the two fields below. Now test the connection.",
+    "curlMiss": "Couldn't find both values in that paste. Check you copied the issueToken request as cURL.",
+    "step6": "Close the tab afterwards, but do not sign out of Google. Signing out invalidates the cookie."
   }
 }

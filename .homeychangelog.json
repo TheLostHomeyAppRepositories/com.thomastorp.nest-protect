@@ -14,5 +14,9 @@
   "1.2.1": {
     "en": "Adding devices before the app is set up now tells you straight away what is missing and where to fix it, instead of waiting half a minute first. The app description also makes clear that a one-time setup on a computer is needed before any Nest Protect can be added.",
     "no": "Prøver du å legge til enheter før appen er satt opp, får du nå med en gang vite hva som mangler og hvor du fikser det, i stedet for å vente en halv minutt først. Beskrivelsen av appen gjør det også tydelig at det trengs et engangsoppsett på datamaskin før noen Nest Protect kan legges til."
+  },
+  "1.3.0": {
+    "en": "Setup is much less fiddly. Instead of hunting for two separate values, you can right-click the issueToken request in Chrome's developer tools, copy it as cURL, and paste that one thing; the app pulls out the token and cookie for you. The Repair screen takes the same paste, and the instructions now cover the step that trips people up when no request appears.",
+    "no": "Oppsettet er langt mindre fikling. I stedet for å lete fram to verdier kan du høyreklikke issueToken-forespørselen i Chromes utviklerverktøy, kopiere den som cURL, og lime inn den ene tingen; appen henter ut token og cookie for deg. Reparer-skjermen tar samme innliming, og veiledningen dekker nå steget som stopper folk når ingen forespørsel dukker opp."
   }
 }

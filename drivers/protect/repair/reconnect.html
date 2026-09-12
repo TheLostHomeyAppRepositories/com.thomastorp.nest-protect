@@ -40,6 +40,10 @@
   <p class="intro" id="intro"></p>
   <p class="scope" id="scope"></p>
 
+  <label for="curl" id="curlLabel"></label>
+  <textarea id="curl" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+  <div id="curlNote" class="scope" style="margin:6px 0 0; min-height:1em;"></div>
+
   <label for="issueToken" id="issueTokenLabel"></label>
   <textarea id="issueToken" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
 
@@ -61,6 +65,7 @@
       <li id="step3"></li>
       <li id="step4"></li>
       <li id="step5"></li>
+      <li id="step6"></li>
     </ol>
   </details>
 </div>
@@ -92,12 +97,15 @@
 
   document.getElementById('intro').textContent = t('repairIntro');
   document.getElementById('scope').textContent = t('repairScope');
+  document.getElementById('curlLabel').textContent = t('curlLabel');
+  document.getElementById('curlNote').textContent = '';
+  document.getElementById('curl').placeholder = t('curlPlaceholder');
   document.getElementById('issueTokenLabel').textContent = t('issueToken');
   document.getElementById('cookieLabel').textContent = t('cookie');
   document.getElementById('howtoLabel').textContent = t('howto');
   testBtn.textContent = t('test');
   saveBtn.textContent = t('save');
-  for (var i = 1; i <= 5; i++) {
+  for (var i = 1; i <= 6; i++) {
     document.getElementById('step' + i).textContent = t('step' + i);
   }
 
@@ -122,6 +130,59 @@
       cookie: cookieEl.value.trim()
     };
   }
+
+  // Lim inn «Copy as cURL» fra DevTools, så fylles feltene under ut. Samme
+  // tolkning som lib/curl-paste.js; visningen kan ikke importere moduler.
+  function stripCaret(text) {
+    var s = String(text || '');
+    s = s.split('^\r\n').join(' ').split('^\n').join(' ');
+    s = s.split('\\r\n').join(' ').split('\\n').join(' ');
+    var out = '';
+    for (var i = 0; i < s.length; i++) {
+      if (s.charAt(i) === '^' && i + 1 < s.length) { out += s.charAt(i + 1); i++; }
+      else out += s.charAt(i);
+    }
+    return out;
+  }
+  function quotedAfter(s, from) {
+    var i = from;
+    while (i < s.length && (s.charAt(i) === ' ' || s.charAt(i) === '\t')) i++;
+    var q = s.charAt(i);
+    if (q !== "'" && q !== '"') return '';
+    var close = s.indexOf(q, i + 1);
+    return close < 0 ? '' : s.slice(i + 1, close);
+  }
+  function parseCurl(input) {
+    var s = ' ' + stripCaret(input);
+    var mark = 'https://accounts.google.com/o/oauth2/iframerpc?';
+    var start = s.indexOf(mark), token = '';
+    if (start >= 0) {
+      var end = start;
+      while (end < s.length) {
+        var ch = s.charAt(end);
+        if (ch === "'" || ch === '"' || ch === ' ' || ch === '\n' || ch === '\r' || ch === '\t') break;
+        end++;
+      }
+      token = s.slice(start, end);
+    }
+    var cookie = '', marks = [' -b ', ' --cookie ', '\n-b ', '\n--cookie '];
+    for (var m = 0; m < marks.length; m++) {
+      var at = s.indexOf(marks[m]);
+      if (at >= 0) { var v = quotedAfter(s, at + marks[m].length); if (v) { cookie = v.trim(); break; } }
+    }
+    return { issueToken: token, cookie: cookie };
+  }
+
+  var curlEl = document.getElementById('curl');
+  var curlNoteEl = document.getElementById('curlNote');
+  curlEl.addEventListener('input', function () {
+    var raw = curlEl.value;
+    if (!raw.trim()) { curlNoteEl.textContent = ''; return; }
+    var parsed = parseCurl(raw);
+    if (parsed.issueToken) issueTokenEl.value = parsed.issueToken;
+    if (parsed.cookie) cookieEl.value = parsed.cookie;
+    curlNoteEl.textContent = (parsed.issueToken && parsed.cookie) ? t('curlOk') : t('curlMiss');
+  });
 
   testBtn.addEventListener('click', function () {
     busy(true);

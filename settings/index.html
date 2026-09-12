@@ -71,6 +71,10 @@
 
 <div class="warn" data-i18n="settings.warning"></div>
 
+<label class="field" for="curl" data-i18n="settings.curlLabel"></label>
+<textarea id="curl" spellcheck="false" autocomplete="off" autocapitalize="off" data-i18n-ph="settings.curlPlaceholder"></textarea>
+<div id="curlNote" class="muted" style="margin:6px 0 4px; min-height:17px;"></div>
+
 <label class="field" for="issueToken" data-i18n="settings.issueToken"></label>
 <textarea id="issueToken" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
 
@@ -90,6 +94,7 @@
     <li data-i18n="settings.step3"></li>
     <li data-i18n="settings.step4"></li>
     <li data-i18n="settings.step5"></li>
+    <li data-i18n="settings.step6"></li>
   </ol>
 </details>
 
@@ -116,6 +121,9 @@
     for (const el of document.querySelectorAll('[data-i18n]')) {
       el.textContent = T(el.getAttribute('data-i18n'));
     }
+    for (const el of document.querySelectorAll('[data-i18n-ph]')) {
+      el.placeholder = T(el.getAttribute('data-i18n-ph'));
+    }
 
     function show(text, ok) {
       $('msg').textContent = text || '';
@@ -139,6 +147,61 @@
       if (err || !value) return;
       $('cookie').value = value;
       loadedCookie = value;
+    });
+
+    // Lim inn en «Copy as cURL» fra DevTools, så fylles begge feltene under ut.
+    // Samme tolkning som lib/curl-paste.js, holdt bevisst kort her fordi
+    // innstillingssiden ikke kan importere moduler. Kontrolltegn sjekkes tegn
+    // for tegn, aldri med en regex bygget av escape-koder.
+    function stripCaret(text) {
+      var s = String(text || '');
+      s = s.split('^\r\n').join(' ').split('^\n').join(' ');
+      s = s.split('\\r\n').join(' ').split('\\n').join(' ');
+      var out = '';
+      for (var i = 0; i < s.length; i++) {
+        if (s.charAt(i) === '^' && i + 1 < s.length) { out += s.charAt(i + 1); i++; }
+        else out += s.charAt(i);
+      }
+      return out;
+    }
+    function quotedAfter(s, from) {
+      var i = from;
+      while (i < s.length && (s.charAt(i) === ' ' || s.charAt(i) === '\t')) i++;
+      var q = s.charAt(i);
+      if (q !== "'" && q !== '"') return '';
+      var close = s.indexOf(q, i + 1);
+      return close < 0 ? '' : s.slice(i + 1, close);
+    }
+    function parseCurl(input) {
+      var s = ' ' + stripCaret(input);
+      var mark = 'https://accounts.google.com/o/oauth2/iframerpc?';
+      var start = s.indexOf(mark), token = '';
+      if (start >= 0) {
+        var end = start;
+        while (end < s.length) {
+          var ch = s.charAt(end);
+          if (ch === "'" || ch === '"' || ch === ' ' || ch === '\n' || ch === '\r' || ch === '\t') break;
+          end++;
+        }
+        token = s.slice(start, end);
+      }
+      var cookie = '', marks = [' -b ', ' --cookie ', '\n-b ', '\n--cookie '];
+      for (var m = 0; m < marks.length; m++) {
+        var at = s.indexOf(marks[m]);
+        if (at >= 0) { var v = quotedAfter(s, at + marks[m].length); if (v) { cookie = v.trim(); break; } }
+      }
+      return { issueToken: token, cookie: cookie };
+    }
+
+    $('curl').addEventListener('input', () => {
+      const raw = $('curl').value;
+      if (!raw.trim()) { $('curlNote').textContent = ''; return; }
+      const parsed = parseCurl(raw);
+      if (parsed.issueToken) $('issueToken').value = parsed.issueToken;
+      if (parsed.cookie) $('cookie').value = parsed.cookie;
+      $('curlNote').textContent = (parsed.issueToken && parsed.cookie)
+        ? T('settings.curlOk')
+        : T('settings.curlMiss');
     });
 
     $('save').addEventListener('click', () => {

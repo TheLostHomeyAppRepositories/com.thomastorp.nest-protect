@@ -18,11 +18,11 @@
     "cookie": "Cookie",
     "warning": "Cookien er en full øktnøkkel for hele Google-kontoen, ikke et Nest-avgrenset token. Hold den unna skjermbilder og feilrapporter.",
     "howto": "Slik henter du verdiene",
-    "step1": "Åpne home.nest.com i Chrome og logg inn med Google.",
-    "step2": "Åpne DevTools med F12, gå til Network-fanen, huk av Preserve log, og last siden på nytt.",
-    "step3": "Filtrer på issueToken. Åpne den forespørselen og kopier hele Request URL inn i det første feltet over.",
-    "step4": "Filtrer på oauth2/iframe. Under Request Headers, kopier hele cookie-verdien inn i det andre feltet over.",
-    "step5": "Lukk fanen, men ikke logg ut av Google. Logger du ut, slutter cookien å virke.",
+    "step1": "På en datamaskin, åpne home.nest.com i Chrome og logg inn med Google.",
+    "step2": "Åpne DevTools med F12 og gå til Network-fanen.",
+    "step3": "Ser du ingen issueToken-forespørsel i steg 5, er siden fortsatt innlogget. Åpne Application-fanen, velg Storage, trykk Clear site data, og gå så tilbake til Network.",
+    "step4": "Huk av Preserve log, og last siden på nytt.",
+    "step5": "Filtrer på issueToken. Høyreklikk forespørselen, velg Copy, deretter Copy as cURL, og lim inn i feltet øverst.",
     "saving": "Lagrer…",
     "save": "Lagre",
     "test": "Test forbindelsen",
@@ -45,7 +45,12 @@
     "ok": "OK",
     "failed": "Feil",
     "wired": "nett",
-    "battery": "batteri"
+    "battery": "batteri",
+    "curlLabel": "Lim inn fra Chrome (enklest)",
+    "curlPlaceholder": "Høyreklikk issueToken-forespørselen i DevTools → Copy → Copy as cURL, og lim inn her",
+    "curlOk": "Fylte ut de to feltene under. Test forbindelsen nå.",
+    "curlMiss": "Fant ikke begge verdiene i innlimingen. Sjekk at du kopierte issueToken-forespørselen som cURL.",
+    "step6": "Lukk fanen etterpå, men ikke logg ut av Google. Logger du ut, slutter cookien å virke."
   },
   "pair": {
     "repairTitle": "Koble til Nest på nytt",
@@ -62,10 +67,15 @@
     "saved": "Lagret. Kobler til…",
     "scriptError": "Noe gikk galt i denne visningen: ",
     "howto": "Slik henter du en ny cookie",
-    "step1": "Åpne home.nest.com i Chrome og logg inn med Google.",
-    "step2": "Åpne DevTools med F12, gå til Network-fanen, huk av Preserve log, og last siden på nytt.",
-    "step3": "Filtrer på issueToken. Åpne den forespørselen og kopier hele Request URL inn i det første feltet over.",
-    "step4": "Filtrer på oauth2/iframe. Under Request Headers, kopier hele cookie-verdien inn i det andre feltet over.",
-    "step5": "Lukk fanen, men ikke logg ut av Google. Logger du ut, slutter cookien å virke."
+    "step1": "På en datamaskin, åpne home.nest.com i Chrome og logg inn med Google.",
+    "step2": "Åpne DevTools med F12 og gå til Network-fanen.",
+    "step3": "Ser du ingen issueToken-forespørsel i steg 5, er siden fortsatt innlogget. Åpne Application-fanen, velg Storage, trykk Clear site data, og gå så tilbake til Network.",
+    "step4": "Huk av Preserve log, og last siden på nytt.",
+    "step5": "Filtrer på issueToken. Høyreklikk forespørselen, velg Copy, deretter Copy as cURL, og lim inn i feltet øverst.",
+    "curlLabel": "Lim inn fra Chrome (enklest)",
+    "curlPlaceholder": "Høyreklikk issueToken-forespørselen i DevTools → Copy → Copy as cURL, og lim inn her",
+    "curlOk": "Fylte ut de to feltene under. Test forbindelsen nå.",
+    "curlMiss": "Fant ikke begge verdiene i innlimingen. Sjekk at du kopierte issueToken-forespørselen som cURL.",
+    "step6": "Lukk fanen etterpå, men ikke logg ut av Google. Logger du ut, slutter cookien å virke."
   }
 }
