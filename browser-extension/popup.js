@@ -1,27 +1,26 @@
 'use strict';
 
 (() => {
-  const { COOKIE_URL, cookieHeader, hasSessionCookie } = self.NestSetup;
+  const { hasSessionCookie, cookieNames } = self.NestSetup;
   const $ = (id) => document.getElementById(id);
 
-  // Hentes på nytt ved hvert klikk, ikke når vinduet åpnes. Google roterer
-  // cookien fortløpende, og en verdi som har ligget i et åpent vindu en stund
-  // kan allerede være foreldet.
-  async function currentCookie() {
-    const cookies = await chrome.cookies.getAll({ url: COOKIE_URL });
-    return cookieHeader(cookies);
-  }
-
-  // Bare navn, aldri verdier. Når økt-cookien mangler, er det dette som skiller
-  // «ikke logget inn» fra «utvidelsen får ikke lov til å se den».
-  async function cookieNames() {
-    const cookies = await chrome.cookies.getAll({ url: COOKIE_URL });
-    return cookies.map((c) => `${c.name} (${c.domain})`);
-  }
+  // Google roterer delene av cookien i løpet av minutter. En fangst som har
+  // ligget en stund kan allerede være foreldet, så alderen vises og brukeren
+  // bes laste siden på nytt når den blir gammel.
+  const STALE_MS = 5 * 60 * 1000;
 
   function problem(text) {
     $('problem').textContent = text;
     $('problem').hidden = !text;
+  }
+
+  function show(ready) {
+    $('waiting').hidden = ready;
+    $('ready').hidden = !ready;
+  }
+
+  async function captured() {
+    return chrome.storage.session.get(['issueToken', 'cookie', 'capturedAt']);
   }
 
   async function copy(text, what) {
@@ -30,59 +29,55 @@
   }
 
   async function render() {
-    const { issueToken } = await chrome.storage.session.get('issueToken');
-    const cookie = await currentCookie();
-
+    const { issueToken, cookie, capturedAt } = await captured();
     problem('');
+
     if (!issueToken) {
-      $('waiting').hidden = false;
-      $('ready').hidden = true;
+      show(false);
       return;
     }
 
-    // Tokenet ble fanget, så siden har lastet og brukeren er logget inn. Mangler
-    // økt-cookien likevel, er det ikke utlogging som er problemet. Første utgave
-    // sa det, og tok feil: utvidelsen manglet tillatelse til .google.com, der
-    // innloggingscookiene ligger, og fikk bare dem som ligger på accounts-domenet.
+    // Tokenet ble fanget, så siden har lastet. Mangler økt-cookien likevel, er
+    // det ikke utlogging utvidelsen kan se — derfor listes navnene, aldri
+    // verdiene, så feilen forklarer seg selv.
     if (!hasSessionCookie(cookie)) {
-      $('waiting').hidden = false;
-      $('ready').hidden = true;
-      const names = await cookieNames();
-      problem(`Couldn't read the Google session cookie. Found ${names.length} cookie(s): `
-        + `${names.join(', ') || 'none'}.`);
+      show(false);
+      const names = cookieNames(cookie);
+      problem(names.length
+        ? `The request had no Google session cookie. Cookies sent: ${names.join(', ')}.`
+        : 'The request carried no cookies at all. Sign in to Google on home.nest.com and reload the page.');
       return;
     }
 
-    $('waiting').hidden = true;
-    $('ready').hidden = false;
+    show(true);
+    const minutes = Math.round((Date.now() - (capturedAt || 0)) / 60000);
+    $('age').textContent = Date.now() - capturedAt > STALE_MS
+      ? `Captured ${minutes} min ago. Reload the Nest page for fresh values.`
+      : `Captured ${minutes < 1 ? 'just now' : `${minutes} min ago`}.`;
   }
 
   $('open').addEventListener('click', () => chrome.tabs.create({ url: 'https://home.nest.com/' }));
 
   $('copyToken').addEventListener('click', async () => {
-    const { issueToken } = await chrome.storage.session.get('issueToken');
+    const { issueToken } = await captured();
     if (issueToken) await copy(issueToken, 'Issue token');
   });
 
   $('copyCookie').addEventListener('click', async () => {
-    const cookie = await currentCookie();
-    if (!hasSessionCookie(cookie)) {
-      problem('The Google session cookie is missing. Sign in on home.nest.com and try again.');
-      return;
-    }
-    await copy(cookie, 'Cookie');
+    const { cookie } = await captured();
+    if (hasSessionCookie(cookie)) await copy(cookie, 'Cookie');
   });
 
   $('clear').addEventListener('click', async () => {
-    await chrome.storage.session.remove(['issueToken', 'capturedAt']);
+    await chrome.storage.session.remove(['issueToken', 'cookie', 'capturedAt']);
     await navigator.clipboard.writeText('');
     $('status').textContent = '';
     render();
   });
 
-  // Oppdager det når Nest-siden laster ferdig mens vinduet står åpent.
+  // Oppdager en ny fangst når Nest-siden lastes på nytt mens vinduet står åpent.
   chrome.storage.onChanged.addListener((changes, area) => {
-    if (area === 'session' && changes.issueToken) render();
+    if (area === 'session' && (changes.issueToken || changes.cookie)) render();
   });
 
   render().catch((error) => problem(`Something went wrong: ${error.message}`));

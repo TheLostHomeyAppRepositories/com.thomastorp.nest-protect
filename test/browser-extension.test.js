@@ -4,7 +4,7 @@ const test = require('node:test');
 const assert = require('node:assert');
 
 const {
-  isIssueTokenUrl, cookieHeader, hasSessionCookie,
+  isIssueTokenUrl, cookieFromHeaders, hasSessionCookie, cookieNames,
 } = require('../browser-extension/shared');
 const config = require('../lib/protect-config');
 
@@ -25,24 +25,33 @@ test('ignorerer andre iframerpc-kall', () => {
   assert.equal(isIssueTokenUrl(undefined), false);
 });
 
-test('cookie-headeren får samme form som nettleseren sender', () => {
-  const header = cookieHeader([
-    { name: 'SID', value: 'a' },
-    { name: '__Secure-3PSID', value: 'b.c=' },
-    { name: 'NID', value: '' },
-  ]);
-  assert.equal(header, 'SID=a; __Secure-3PSID=b.c=; NID=');
-  assert.equal(hasSessionCookie(header), true);
+// Headeren tas uendret. Å bygge den på nytt av chrome.cookies ga
+// USER_LOGGED_OUT, fordi nettleseren bare sender et utvalg i en innebygd side.
+test('cookien tas nøyaktig slik den ble sendt', () => {
+  const sent = 'SSID=a; __Secure-3PSID=b.c=; __Secure-3PSIDTS=sidts-x';
+  const headers = [
+    { name: 'User-Agent', value: 'Chrome' },
+    { name: 'Cookie', value: sent },
+  ];
+  assert.equal(cookieFromHeaders(headers), sent);
+  assert.equal(cookieFromHeaders([{ name: 'cookie', value: sent }]), sent);
 });
 
-test('uten økt-cookien sies det fra', () => {
-  assert.equal(hasSessionCookie(cookieHeader([{ name: 'SID', value: 'a' }])), false);
-  assert.equal(cookieHeader(undefined), '');
+test('ingen cookie-header gir tom verdi, ikke en feil', () => {
+  assert.equal(cookieFromHeaders([{ name: 'Accept', value: '*/*' }]), '');
+  assert.equal(cookieFromHeaders(undefined), '');
+});
+
+test('økt-cookien oppdages, og bare navn listes', () => {
+  assert.equal(hasSessionCookie('SSID=a; __Secure-3PSID=b'), true);
+  assert.equal(hasSessionCookie('SSID=a'), false);
+  assert.deepEqual(cookieNames('SSID=a; __Secure-3PSID=b=c; NID='), ['SSID', '__Secure-3PSID', 'NID']);
+  assert.deepEqual(cookieNames(''), []);
 });
 
 // Det viktigste: det utvidelsen kopierer skal gå rett gjennom appens egen
 // validering. Hvis de to noen gang glir fra hverandre, feiler denne.
 test('verdiene består appens egen validering', () => {
-  const cookie = cookieHeader([{ name: 'SID', value: 'a' }, { name: '__Secure-3PSID', value: 'b' }]);
+  const cookie = cookieFromHeaders([{ name: 'Cookie', value: 'SSID=a; __Secure-3PSID=b' }]);
   assert.deepEqual(config.validate({ issueToken: TOKEN, cookie }), []);
 });

@@ -6,21 +6,21 @@ don't have to dig through the developer tools.
 
 ## How it works
 
-- When home.nest.com asks Google for a token, the extension notices the request
-  and keeps its address (the issue token) in session storage. It only watches;
-  it never blocks or changes anything.
-- When you press **Copy** on the cookie, it reads the Google cookies your
-  browser would send to `accounts.google.com/o/oauth2/iframe`, which is exactly
-  what the app imitates.
+When home.nest.com asks Google for a token, the extension notices that request
+and keeps two things from it in session storage: its address (the issue token)
+and the Cookie header Chrome sent with it. Those are exactly the values you
+would otherwise copy out of the developer tools, and exactly the request the
+app imitates. The extension only watches; it never blocks or changes anything.
 
-It asks for access to `google.com` as well as `accounts.google.com` because
-Chrome only hands an extension the cookies for domains it has permission for,
-and the sign-in cookies live on `.google.com`. Without it, the session cookie
-the app depends on is invisible to the extension.
+It deliberately does not build the cookie from Chrome's cookie store. An
+earlier version did, and Google answered `USER_LOGGED_OUT`: the Google frame
+sits inside home.nest.com, so Chrome sends only some of the cookies, and the
+app needs that same selection.
 
 Nothing is sent anywhere. The extension makes no network requests of its own,
-the issue token is kept in memory only and forgotten when Chrome closes, and
-the cookie is read fresh each time you copy it.
+and the values are kept in memory only and forgotten when Chrome closes. Google
+rotates parts of the cookie within minutes, so paste the values into Homey and
+test the connection straight away.
 
 ## Install for testing
 
