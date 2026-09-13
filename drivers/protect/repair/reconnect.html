@@ -39,6 +39,8 @@
 <div class="np">
   <p class="intro" id="intro"></p>
   <p class="scope" id="scope"></p>
+  <p class="scope" id="extTip" style="margin-bottom:2px"></p>
+  <p class="scope" style="margin-top:0"><a id="extLink" target="_blank" rel="noopener"></a></p>
 
   <label for="curl" id="curlLabel"></label>
   <textarea id="curl" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
@@ -97,6 +99,10 @@
 
   document.getElementById('intro').textContent = t('repairIntro');
   document.getElementById('scope').textContent = t('repairScope');
+  document.getElementById('extTip').textContent = t('extension');
+  var extLink = document.getElementById('extLink');
+  extLink.textContent = t('extensionLink');
+  extLink.href = 'https://chromewebstore.google.com/detail/jbheemaebmbbjnaflanegabohniepcbp';
   document.getElementById('curlLabel').textContent = t('curlLabel');
   document.getElementById('curlNote').textContent = '';
   document.getElementById('curl').placeholder = t('curlPlaceholder');

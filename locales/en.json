@@ -51,7 +51,8 @@
     "curlOk": "Filled in the two fields below. Now test the connection.",
     "curlMiss": "Couldn't find both values in that paste. Check you copied the issueToken request as cURL.",
     "step6": "Close the tab afterwards, but do not sign out of Google. Signing out invalidates the cookie.",
-    "extension": "Tip: the free \"Nest Protect for Homey — setup helper\" Chrome extension does the copying below for you. Search for it in the Chrome Web Store."
+    "extension": "Tip: the free \"Nest Protect for Homey — setup helper\" Chrome extension does the copying below for you.",
+    "extensionLink": "Get it on the Chrome Web Store"
   },
   "pair": {
     "repairTitle": "Reconnect to Nest",
@@ -77,6 +78,8 @@
     "curlPlaceholder": "Right-click the issueToken request in DevTools → Copy → Copy as cURL, then paste it here",
     "curlOk": "Filled in the two fields below. Now test the connection.",
     "curlMiss": "Couldn't find both values in that paste. Check you copied the issueToken request as cURL.",
-    "step6": "Close the tab afterwards, but do not sign out of Google. Signing out invalidates the cookie."
+    "step6": "Close the tab afterwards, but do not sign out of Google. Signing out invalidates the cookie.",
+    "extension": "Tip: the free \"Nest Protect for Homey — setup helper\" Chrome extension does the copying below for you.",
+    "extensionLink": "Get it on the Chrome Web Store"
   }
 }

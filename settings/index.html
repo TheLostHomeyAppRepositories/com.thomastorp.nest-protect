@@ -89,6 +89,7 @@
 <details>
   <summary data-i18n="settings.howto"></summary>
   <p class="hint" data-i18n="settings.extension" style="margin-top:10px"></p>
+  <p style="margin:4px 0 2px"><a id="extLink" data-i18n="settings.extensionLink" target="_blank" rel="noopener"></a></p>
   <ol>
     <li data-i18n="settings.step1"></li>
     <li data-i18n="settings.step2"></li>
@@ -125,6 +126,12 @@
     for (const el of document.querySelectorAll('[data-i18n-ph]')) {
       el.placeholder = T(el.getAttribute('data-i18n-ph'));
     }
+
+    // Direkte butikklenke. Søk i Chrome Web Store finner ikke en fersk
+    // publisering på flere dager, så vi peker rett på oppføringen.
+    const STORE_URL = 'https://chromewebstore.google.com/detail/jbheemaebmbbjnaflanegabohniepcbp';
+    const extLink = $('extLink');
+    if (extLink) extLink.href = STORE_URL;
 
     function show(text, ok) {
       $('msg').textContent = text || '';
