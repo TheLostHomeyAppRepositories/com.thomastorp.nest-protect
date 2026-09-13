@@ -6,6 +6,14 @@ Real-time smoke, CO and heat alarms from Nest Protect on Homey Pro.
 > siblings regardless of this app. Treat Homey as notification and automation
 > on top of that, never as part of the safety chain.
 
+## Get it
+
+- **Homey app:** [Nest Protect on the Homey App Store](https://homey.app/a/com.thomastorp.nest-protect/)
+- **Setup helper (Chrome extension):** one click to copy the two sign-in values the
+  app needs — [Chrome Web Store](https://chromewebstore.google.com/detail/jbheemaebmbbjnaflanegabohniepcbp).
+  A newly published listing can take a few days to show up in store *search*; the
+  link works immediately. It is optional — the [manual setup](#authentication) works too.
+
 ## Why this exists
 
 Google's Smart Device Management API — the supported, documented way to reach

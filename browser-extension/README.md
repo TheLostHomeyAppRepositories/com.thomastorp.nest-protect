@@ -4,6 +4,15 @@ A small Chrome extension that copies the two values the Nest Protect Homey app
 needs — the issue token and the cookie — from your signed-in browser, so you
 don't have to dig through the developer tools.
 
+## Install
+
+**From the Chrome Web Store (one click):**
+https://chromewebstore.google.com/detail/jbheemaebmbbjnaflanegabohniepcbp
+
+A newly published listing can take a few days to show up in Web Store *search*,
+so use the direct link above until then. To install manually instead, see
+[Install for testing](#install-for-testing) below.
+
 ## How it works
 
 When home.nest.com asks Google for a token, the extension notices that request
