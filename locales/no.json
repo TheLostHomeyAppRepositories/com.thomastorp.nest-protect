@@ -51,8 +51,8 @@
     "curlOk": "Fylte ut de to feltene under. Test forbindelsen nå.",
     "curlMiss": "Fant ikke begge verdiene i innlimingen. Sjekk at du kopierte issueToken-forespørselen som cURL.",
     "step6": "Lukk fanen etterpå, men ikke logg ut av Google. Logger du ut, slutter cookien å virke.",
-    "extension": "Tips: Chrome-utvidelsen «Nest Protect for Homey — setup helper» gjør kopieringen under for deg.",
-    "extensionLink": "Hent den i Chrome Web Store"
+    "extension": "Tips: Chrome-utvidelsen «Nest Protect for Homey — setup helper» gjør kopieringen under for deg. Søk den opp i Chrome Web Store, eller åpne den direkte:",
+    "extensionLink": "Åpne i Chrome Web Store"
   },
   "pair": {
     "repairTitle": "Koble til Nest på nytt",
@@ -79,7 +79,7 @@
     "curlOk": "Fylte ut de to feltene under. Test forbindelsen nå.",
     "curlMiss": "Fant ikke begge verdiene i innlimingen. Sjekk at du kopierte issueToken-forespørselen som cURL.",
     "step6": "Lukk fanen etterpå, men ikke logg ut av Google. Logger du ut, slutter cookien å virke.",
-    "extension": "Tips: Chrome-utvidelsen «Nest Protect for Homey — setup helper» gjør kopieringen under for deg.",
-    "extensionLink": "Hent den i Chrome Web Store"
+    "extension": "Tips: Chrome-utvidelsen «Nest Protect for Homey — setup helper» gjør kopieringen under for deg. Søk den opp i Chrome Web Store, eller åpne den direkte:",
+    "extensionLink": "Åpne i Chrome Web Store"
   }
 }

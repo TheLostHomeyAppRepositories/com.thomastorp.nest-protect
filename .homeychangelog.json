@@ -22,5 +22,9 @@
   "1.3.1": {
     "en": "The setup helper is now a published Chrome extension, so the settings and Repair screens link straight to it instead of telling you to search the store (a freshly published listing takes days to show up in search).",
     "no": "Oppsett-hjelperen er nå en publisert Chrome-utvidelse, så innstillingene og Reparer-skjermen lenker rett til den i stedet for å be deg søke i butikken (en fersk publisering bruker dager på å dukke opp i søk)."
+  },
+  "1.3.2": {
+    "en": "The setup helper extension is now searchable in the Chrome Web Store, so the setup tip mentions searching for it by name as well as the direct link.",
+    "no": "Oppsett-hjelperen er nå søkbar i Chrome Web Store, så oppsett-tipset nevner å søke den opp ved navn i tillegg til direktelenken."
   }
 }
