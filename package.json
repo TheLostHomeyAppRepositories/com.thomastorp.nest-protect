@@ -1,11 +1,11 @@
 {
   "name": "com.thomastorp.nest-protect",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "private": true,
   "description": "Nest Protect for Homey Pro, over the legacy Nest API with real-time subscribe",
   "main": "app.js",
   "scripts": {
-    "test": "node --test test/topaz.test.js test/where.test.js test/nest-client.test.js test/subscribe-response.test.js test/credentials.test.js test/auth-token.test.js test/any-alarm.test.js test/browser-extension.test.js test/curl-paste.test.js"
+    "test": "node --test test/topaz.test.js test/where.test.js test/nest-client.test.js test/subscribe-response.test.js test/credentials.test.js test/auth-token.test.js test/any-alarm.test.js test/browser-extension.test.js test/curl-paste.test.js test/cookie-persistence.test.js"
   },
   "author": "Thomas Torp",
   "license": "MIT",
