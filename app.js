@@ -94,6 +94,12 @@ class NestProtectApp extends Homey.App {
     // håndterte den.
     this._anyAlarms = null;
 
+    // Hvor ofte og når Google sist roterte cookien. Bor her og ikke i klienten,
+    // fordi klienten nullstilles etter en avvist innlogging — og det er nettopp
+    // da tallene trengs.
+    this._cookieRotations = 0;
+    this._cookieRotatedAt = null;
+
     this.registerFlowCards();
 
     // Nye verdier krever ny innlogging. Vi river ned og bygger opp igjen i
@@ -134,14 +140,17 @@ class NestProtectApp extends Homey.App {
       log: (...args) => this.log('[nest]', ...args),
       // Google roterer cookien ved hver innlogging. Uten at den skrives
       // tilbake, overlever ikke innloggingen en omstart av appen.
-      onCredentials: async ({ cookie: rotated }) => {
+      onCredentials: async ({ cookie: rotated, rotated: names = [] }) => {
         // Verdien huskes slik at lytteren kan kjenne igjen vår egen skriving.
         // Et flagg rundt await-en holdt ikke: hendelsen kommer når den kommer,
         // og hadde flagget rukket å bli falskt igjen, ville appen startet på
         // nytt hver gang Google roterte cookien — altså ved hver innlogging.
         this._writtenCookie = rotated;
         await this.homey.settings.set(SETTING_COOKIE, rotated);
-        this.log('Cookie rotert av Google og lagret');
+        this._cookieRotations += 1;
+        this._cookieRotatedAt = new Date().toISOString();
+        // Bare navnene. Verdiene er Google-økten og hører ikke hjemme i en logg.
+        this.log(`Cookie rotert av Google og lagret (${names.join(', ') || 'ukjent'})`);
       },
     });
 
@@ -461,6 +470,10 @@ class NestProtectApp extends Homey.App {
       // nå selv om telefonen ennå ikke har fått beskjed.
       offlineSince: this._offlineSince ? new Date(this._offlineSince).toISOString() : null,
       offlineReported: this._offlineReported,
+      // Synlig i innstillingene, så en bruker med USER_LOGGED_OUT kan se om
+      // rotasjonen faktisk gikk sin gang fram til bruddet.
+      cookieRotations: this._cookieRotations,
+      cookieRotatedAt: this._cookieRotatedAt,
       devices: [...this._states.values()].map(({ state, label }) => ({
         id: state.id,
         label,

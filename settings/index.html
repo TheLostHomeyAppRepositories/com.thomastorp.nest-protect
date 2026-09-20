@@ -107,6 +107,7 @@
     <div class="grow">
       <div id="connText">—</div>
       <div class="sub" id="updated"></div>
+      <div class="sub" id="rotation"></div>
     </div>
   </div>
 </div>
@@ -289,6 +290,16 @@
           + (status.lastUpdate
             ? new Date(status.lastUpdate).toLocaleString()
             : T('settings.never'));
+
+        // Om Google faktisk roterer cookien. Står denne stille mens appen
+        // rapporterer USER_LOGGED_OUT, er det Google som avsluttet økten —
+        // ikke appen som mistet noe.
+        $('rotation').textContent = status.cookieRotatedAt
+          ? T('settings.cookieRotation', {
+            when: new Date(status.cookieRotatedAt).toLocaleString(),
+            count: status.cookieRotations || 0,
+          })
+          : T('settings.cookieRotationNever');
 
         // Bygget som noder, ikke som HTML-streng. Navn og modell kommer fra
         // Nest-kontoen, altså utenfra, og settes inn på den ene siden i hele

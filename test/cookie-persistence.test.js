@@ -81,3 +81,58 @@ test('ingen rotasjon → onCookie kalles ikke', async () => {
   } finally { restore(); }
   assert.equal(called, false);
 });
+
+// --- 1.3.4: instrumentering og tydelig USER_LOGGED_OUT ---
+
+const { changedCookieNames, fetchAccessToken } = require('../lib/nest-auth');
+
+test('changedCookieNames gir bare navn, sortert, aldri verdier', () => {
+  const before = '__Secure-3PSID=a; __Secure-3PSIDCC=old; NID=1';
+  const after = '__Secure-3PSID=a; __Secure-3PSIDCC=new; NID=1; __Secure-3PSIDTS=ts';
+  assert.deepEqual(changedCookieNames(before, after), ['__Secure-3PSIDCC', '__Secure-3PSIDTS']);
+  assert.deepEqual(changedCookieNames(before, before), []);
+  // fjernet teller også som endret
+  assert.deepEqual(changedCookieNames(before, '__Secure-3PSID=a; NID=1'), ['__Secure-3PSIDCC']);
+});
+
+test('fetchAccessToken rapporterer hvilke cookies som roterte', async () => {
+  const restore = stubChain({ rotate: true, jwtOk: true });
+  try {
+    const token = await fetchAccessToken(ISSUE_TOKEN, OLD_COOKIE);
+    assert.deepEqual(token.rotated, ['__Secure-3PSIDCC']);
+    assert.equal(token.setCookieCount, 1);
+  } finally { restore(); }
+});
+
+test('onExchange kalles også når Google ikke roterte noe', async () => {
+  const restore = stubChain({ rotate: false, jwtOk: true });
+  const seen = [];
+  try {
+    await authenticate(ISSUE_TOKEN, OLD_COOKIE, {
+      onExchange: async (info) => { seen.push(info); },
+      onCookie: async () => { throw new Error('skal ikke kalles uten endring'); },
+    });
+  } finally { restore(); }
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].changed, false);
+  assert.deepEqual(seen[0].rotated, []);
+  assert.equal(seen[0].setCookieCount, 0);
+});
+
+test('USER_LOGGED_OUT forklarer at brukeren må reparere', async () => {
+  const original = global.fetch;
+  global.fetch = async () => ({
+    ok: true, status: 200,
+    headers: { getSetCookie: () => [] },
+    json: async () => ({ error: 'USER_LOGGED_OUT' }),
+  });
+  try {
+    await assert.rejects(
+      fetchAccessToken(ISSUE_TOKEN, OLD_COOKIE),
+      (err) => err.code === 'USER_LOGGED_OUT'
+        && err.retryable === false
+        && /Repair/.test(err.message)
+        && /USER_LOGGED_OUT/.test(err.message),
+    );
+  } finally { global.fetch = original; }
+});

@@ -52,7 +52,9 @@
     "curlMiss": "Couldn't find both values in that paste. Check you copied the issueToken request as cURL.",
     "step6": "Close the tab afterwards, but do not sign out of Google. Signing out invalidates the cookie.",
     "extension": "Tip: the free \"Nest Protect for Homey — setup helper\" Chrome extension does the copying below for you. Search for it in the Chrome Web Store, or open it directly:",
-    "extensionLink": "Open in the Chrome Web Store"
+    "extensionLink": "Open in the Chrome Web Store",
+    "cookieRotation": "Cookie refreshed by Google: __when__ (__count__× since the app started)",
+    "cookieRotationNever": "Cookie refreshed by Google: not yet since the app started"
   },
   "pair": {
     "repairTitle": "Reconnect to Nest",
