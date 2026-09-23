@@ -1,8 +1,8 @@
 # Privacy policy — Nest Protect for Homey setup helper
 
-Last updated: 12 September 2026
+Last updated: 23 September 2026
 
-This Chrome extension exists for one purpose: to let you copy the two values the
+This browser add-on exists for one purpose: to let you copy the two values the
 Nest Protect app for Homey needs, the issue token and the cookie, from your own
 signed-in browser, so you don't have to find them in the developer tools.
 
@@ -14,15 +14,15 @@ reads two things from it:
 
 - the request address, which contains an opaque Google account identifier
   (`login_hint`) and is what the Homey app calls the issue token
-- the Cookie header Chrome sends with that request, which contains your Google
+- the Cookie header the browser sends with that request, which contains your Google
   session cookies
 
 It reads nothing else: no other requests, no page content, no browsing history.
 
 ## Where it is kept
 
-Both values are held in Chrome's session storage, which lives in memory only.
-They are never written to disk, and they are erased when you close Chrome or
+Both values are held in the browser's session storage, which lives in memory only.
+They are never written to disk, and they are erased when you close the browser or
 press "Forget these values" in the extension.
 
 ## What it does with them
