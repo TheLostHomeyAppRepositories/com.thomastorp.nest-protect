@@ -9,10 +9,10 @@ Real-time smoke, CO and heat alarms from Nest Protect on Homey Pro.
 ## Get it
 
 - **Homey app:** [Nest Protect on the Homey App Store](https://homey.app/a/com.thomastorp.nest-protect/)
-- **Setup helper (Chrome extension):** one click to copy the two sign-in values the
-  app needs — [Chrome Web Store](https://chromewebstore.google.com/detail/jbheemaebmbbjnaflanegabohniepcbp).
-  A newly published listing can take a few days to show up in store *search*; the
-  link works immediately. It is optional — the [manual setup](#authentication) works too.
+- **Setup helper (Firefox add-on):** one click to copy the two sign-in values the
+  app needs — [Firefox Add-ons](https://addons.mozilla.org/firefox/addon/nest-protect-for-homey/).
+  It is optional — the [manual setup](#authentication) works too. Use Firefox, not
+  Chrome or Edge; see below for why.
 
 ## Why this exists
 
@@ -63,6 +63,15 @@ Google removed API-key access, so the only way in is a session cookie plus the
 token.** Anyone holding it holds the account. Keep it out of screenshots,
 version control and bug reports. It stops working if you sign out of that
 browser session or change your password.
+
+**Use Firefox.** Since 2026, Chrome and Edge on Windows bind Google sessions
+to the computer's TPM (Device Bound Session Credentials). The short-lived
+`__Secure-3PSIDTS` cookie can then only be renewed by that browser, so values
+copied from it stop working after about two and a half hours — reliably on the
+third hourly renewal. The app cannot renew it, and stripping the cookie makes
+Google reject the session at once (tried in 1.3.5, reverted in 1.3.6). Firefox
+does not implement DBSC. Copy the values right after signing in, then close the
+window without signing out.
 
 The app writes rotated cookies back to its settings automatically — Google
 rotates them on every sign-in, and a client that keeps sending the original

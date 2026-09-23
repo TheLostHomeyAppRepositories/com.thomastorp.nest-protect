@@ -63,3 +63,17 @@ test('resultatet består appens validering', () => {
   const r = parseCurl(BASH);
   assert.deepEqual(config.validate(r), []);
 });
+
+// Firefox legger cookien i en header og skriver cURL med ^-escaping i cmd.
+// Innstillingssiden og reparasjonsvisningen har egne kopier av parseren; de
+// ble tidligere bare testet mot Chromes -b-format og fant ingen cookie her.
+test('Firefox «Kopier som cURL» for Windows gir begge verdiene', () => {
+  const url = 'https://accounts.google.com/o/oauth2/iframerpc?action=issueToken&login_hint=AAA&client_id=BBB&auto=1';
+  const cookie = 'NID=n1; __Secure-3PSID=g.a000y; LSID=s.NO|s.youtube:g.a000z';
+  const esc = (s) => s.replace(/[%&|"]/g, (c) => `^${c}`);
+  const text = `curl.exe ^"${esc(url)}^" ^\n  --compressed ^\n`
+    + `  -H ^"User-Agent: Mozilla/5.0 Firefox/156.0^" ^\n  -H ^"Cookie: ${esc(cookie)}^" ^\n  -H ^"TE: trailers^"`;
+  const parsed = parseCurl(text);
+  assert.equal(parsed.issueToken, url);
+  assert.equal(parsed.cookie, cookie);
+});

@@ -22,13 +22,13 @@ class ProtectDevice extends Homey.Device {
     this._onStates = (states) => {
       this._chain = this._chain
         .then(() => this._apply(states))
-        .catch((error) => this.error('Kunne ikke oppdatere', error));
+        .catch((error) => this.error('Could not update', error));
     };
 
     this._onConnection = (connected) => {
       if (!connected) {
         this.setUnavailable(this.homey.__('error.disconnected'))
-          .catch((error) => this.error('Kunne ikke merke enheten utilgjengelig', error));
+          .catch((error) => this.error('Could not mark the device unavailable', error));
         return;
       }
       // Tilkoblet igjen betyr ikke at akkurat denne varsleren er tilbake. Er
@@ -36,7 +36,7 @@ class ProtectDevice extends Homey.Device {
       // for å blinke tilgjengelig til neste avlesning oppdager det på nytt.
       if (this.homey.app.states().has(this._id)) {
         this.setAvailable()
-          .catch((error) => this.error('Kunne ikke merke enheten tilgjengelig', error));
+          .catch((error) => this.error('Could not mark the device available', error));
       }
     };
 
@@ -51,7 +51,7 @@ class ProtectDevice extends Homey.Device {
     if (known.size > 0) this._onStates(known);
     else if (this.homey.app.isConnected() === false) this._onConnection(false);
 
-    this.log(`${this.getName()} klar`);
+    this.log(`${this.getName()} ready`);
   }
 
   async onUninit() {
@@ -81,7 +81,7 @@ class ProtectDevice extends Homey.Device {
       // Homey stempler bare når verdien faktisk endrer seg, så det koster
       // ingenting å skrive samme verdi om igjen.
       await this.setCapabilityValue(capability, value)
-        .catch((error) => this.error(`Kunne ikke sette ${capability}`, error));
+        .catch((error) => this.error(`Could not set ${capability}`, error));
     }
 
     await this._applyWarnings(state);
@@ -98,7 +98,7 @@ class ProtectDevice extends Homey.Device {
     if (JSON.stringify(current.batteries) === JSON.stringify(batteries)) return;
 
     await this.setEnergy({ ...current, batteries })
-      .catch((error) => this.error('Kunne ikke sette energiprofil', error));
+      .catch((error) => this.error('Could not set the energy profile', error));
   }
 
   // Enheter paret før en capability fantes får den lagt til her, i stedet for
@@ -108,8 +108,8 @@ class ProtectDevice extends Homey.Device {
     for (const capability of capabilitiesFor(state)) {
       if (this.hasCapability(capability)) continue;
       await this.addCapability(capability)
-        .then(() => this.log(`La til ${capability}`))
-        .catch((error) => this.error(`Kunne ikke legge til ${capability}`, error));
+        .then(() => this.log(`Added ${capability}`))
+        .catch((error) => this.error(`Could not add ${capability}`, error));
     }
   }
 
@@ -183,7 +183,7 @@ class ProtectDevice extends Homey.Device {
 
     if (changed.length === 0) return;
     await this.setSettings(Object.fromEntries(changed))
-      .catch((error) => this.error('Kunne ikke oppdatere enhetsinfo', error));
+      .catch((error) => this.error('Could not update device info', error));
   }
 }
 

@@ -114,7 +114,7 @@ class NestProtectApp extends Homey.App {
     });
 
     this.start();
-    this.log(`Nest Protect v${this.manifest.version} startet`);
+    this.log(`Nest Protect v${this.manifest.version} started`);
   }
 
   async onUninit() {
@@ -150,7 +150,7 @@ class NestProtectApp extends Homey.App {
         this._cookieRotations += 1;
         this._cookieRotatedAt = new Date().toISOString();
         // Bare navnene. Verdiene er Google-økten og hører ikke hjemme i en logg.
-        this.log(`Cookie rotert av Google og lagret (${names.join(', ') || 'ukjent'})`);
+        this.log(`Cookie rotated by Google and saved (${names.join(', ') || 'unknown'})`);
       },
     });
 
@@ -166,11 +166,11 @@ class NestProtectApp extends Homey.App {
     // løkka hvis den sover i et gjenforsøksintervall.
     if (this._abort) this._abort.abort();
     this.wake();
-    this.log('Tvungen innhenting bestilt');
+    this.log('Forced refresh requested');
   }
 
   restart() {
-    this.log('Innstillinger endret — kobler til på nytt');
+    this.log('Settings changed, reconnecting');
     this._client = null;
     this._buckets = [];
     this._launchedAt = 0;
@@ -195,7 +195,7 @@ class NestProtectApp extends Homey.App {
 
   start() {
     if (this._loop) return;
-    this._loop = this._run().catch((error) => this.error('Løkka stoppet uventet', error));
+    this._loop = this._run().catch((error) => this.error('Main loop stopped unexpectedly', error));
   }
 
   // Hovedløkka. Henter alt én gang, og henger deretter på subscribe som svarer
@@ -237,8 +237,8 @@ class NestProtectApp extends Homey.App {
         // innstillingene leses på nytt — kanskje har de blitt fikset i mellomtiden.
         if (error instanceof NestAuthError && error.retryable === false) {
           this.error(
-            `Google avviste innloggingen (${error.message}). `
-            + `Nytt forsøk om ${REAUTH_RETRY_MS / 60000} min.`,
+            `Google rejected the sign-in (${error.message}). `
+            + `Retrying in ${REAUTH_RETRY_MS / 60000} min.`,
           );
           this._client = null;
           attempt = 0;
@@ -250,14 +250,14 @@ class NestProtectApp extends Homey.App {
         // henter alt på nytt. app_launch gir en fersk adresse, og det er den
         // eneste veien ut når den gamle er tatt ut av drift.
         if (attempt >= RELAUNCH_AFTER_FAILURES && this._launchedAt !== 0) {
-          this.error(`${attempt} feil på rad — henter ny transport-vert ved neste forsøk`);
+          this.error(`${attempt} failures in a row, fetching a new transport host on the next attempt`);
           this._launchedAt = 0;
           // Klienten finnes ikke hvis feilen kom av manglende innstillinger.
           if (this._client) this._client.invalidate();
         }
 
         const wait = backoffMs(attempt);
-        this.error(`Forsøk ${attempt} feilet (${error.message}) — nytt forsøk om ${wait / 1000}s`);
+        this.error(`Attempt ${attempt} failed (${error.message}), retrying in ${wait / 1000}s`);
         await this._sleep(wait);
       }
     }
@@ -268,7 +268,7 @@ class NestProtectApp extends Homey.App {
     this._whereMap = buildWhereMap(all);
     this._buckets = all.filter((b) => String(b.object_key || '').startsWith('topaz.'));
     this._launchedAt = Date.now();
-    this.log(`Hentet ${this._buckets.length} varsler(e)`);
+    this.log(`Fetched ${this._buckets.length} alarm(s)`);
     this.publish();
   }
 
@@ -301,7 +301,7 @@ class NestProtectApp extends Homey.App {
       if (this._reauths >= MAX_CONSECUTIVE_REAUTHS) {
         throw new Error(`Nest keeps rejecting the session (${this._reauths} times in a row)`);
       }
-      this.log('Økten utløp under lytting — logger inn på nytt');
+      this.log('Session expired while listening, signing in again');
       return;
     }
 
@@ -309,7 +309,7 @@ class NestProtectApp extends Homey.App {
     if (result.buckets.length === 0) return;
 
     this._buckets = mergeBuckets(this._buckets, result.buckets);
-    this.log(`${result.buckets.length} endring(er) mottatt`);
+    this.log(`${result.buckets.length} change(s) received`);
     this.publish();
   }
 
@@ -378,11 +378,11 @@ class NestProtectApp extends Homey.App {
         const source = entries.find(({ state }) => alarms(state)[hazard] === true);
         this._anyStarted
           .trigger({ device_name: (source && source.label) || '' }, { hazard })
-          .catch((error) => this.error('Kunne ikke utløse samlet alarmkort', error));
+          .catch((error) => this.error('Could not trigger the house-wide alarm card', error));
       } else if (now === false && before === true) {
         this._anyStopped
           .trigger({}, { hazard })
-          .catch((error) => this.error('Kunne ikke utløse samlet friskmelding', error));
+          .catch((error) => this.error('Could not trigger the house-wide all-clear card', error));
       }
 
       // Ukjent nå betyr at vi beholder det vi visste sist, slik at et hull i
@@ -407,7 +407,7 @@ class NestProtectApp extends Homey.App {
     if (this._connected === connected) return;
 
     this._connected = connected;
-    this.log(connected ? 'Tilkoblet Nest' : `Mistet forbindelsen: ${this._lastError}`);
+    this.log(connected ? 'Connected to Nest' : `Connection lost: ${this._lastError}`);
 
     // Enhetene merkes utilgjengelige med en gang. Det er en stille beskjed i
     // grensesnittet, ikke et varsel, og da er øyeblikkelig riktig.
@@ -427,10 +427,10 @@ class NestProtectApp extends Homey.App {
       if (this._connected) return;
 
       this._offlineReported = true;
-      this.log(`Fortsatt frakoblet etter ${Math.round(OFFLINE_ALERT_MS / 60000)} min — varsler`);
+      this.log(`Still disconnected after ${Math.round(OFFLINE_ALERT_MS / 60000)} min, alerting`);
       this._connectionTrigger
         .trigger({}, { state: 'offline' })
-        .catch((err) => this.error('Kunne ikke utløse tilkoblingskort', err));
+        .catch((err) => this.error('Could not trigger the connection card', err));
     }, OFFLINE_ALERT_MS);
   }
 
@@ -446,14 +446,14 @@ class NestProtectApp extends Homey.App {
     // Bare hvis du faktisk ble varslet om bruddet. En gladmelding om et
     // problem man aldri hørte om er bare støy.
     if (!this._offlineReported) {
-      if (downMs > 0) this.log(`Kom tilbake etter ${Math.round(downMs / 1000)}s — ikke verdt et varsel`);
+      if (downMs > 0) this.log(`Back after ${Math.round(downMs / 1000)}s, too short to alert`);
       return;
     }
 
     this._offlineReported = false;
     this._connectionTrigger
       .trigger({}, { state: 'online' })
-      .catch((err) => this.error('Kunne ikke utløse tilkoblingskort', err));
+      .catch((err) => this.error('Could not trigger the connection card', err));
   }
 
   // Alt innstillingssiden trenger, i ett kall.
@@ -539,7 +539,7 @@ class NestProtectApp extends Homey.App {
   triggerWarning(device, hazard) {
     return this._warningTrigger
       .trigger(device, {}, { hazard })
-      .catch((error) => this.error('Kunne ikke utløse varselkort', error));
+      .catch((error) => this.error('Could not trigger the alarm card', error));
   }
 }
 

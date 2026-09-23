@@ -19,10 +19,10 @@ The same helper is built for Firefox from this folder. `node build.js` writes
 `dist/firefox/` and a zip for addons.mozilla.org; only the manifest differs
 (`manifest.firefox.json`). The listing is in review.
 
-Firefox needs one extra step: on home.nest.com, click the shield in the address
-bar and turn Enhanced Tracking Protection off for that site. Otherwise Firefox
-keeps your Google sign-in away from the embedded Google frame and the request
-carries no session cookie. The popup says so when it happens.
+Enhanced Tracking Protection can usually stay on: Firefox grants the Google
+frame access when you click Sign in with Google. If the request still carries no
+session cookie, click the shield in the address bar and switch protection off
+for home.nest.com. The popup says so when it happens.
 
 To try it before it is listed: open `about:debugging#/runtime/this-firefox`,
 choose **Load Temporary Add-on**, and pick `dist/firefox/manifest.json`.

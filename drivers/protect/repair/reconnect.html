@@ -1,10 +1,9 @@
 <!--
   Reparasjonsvisning: ny innlogging mot Nest.
 
-  Åpnes fra enhetens meny: Reparer. Homey viser den knappen når enheten er
-  utilgjengelig, og det er nøyaktig tilstanden når cookien har utløpt — altså
-  akkurat der brukeren står når problemet oppstår, i stedet for inne i
-  appinnstillingene der ingen leter.
+  Åpnes fra enhetens meny: Reparer. Homey viser valget så lenge driveren har
+  en repair-visning, også når enheten er tilgjengelig. Det er der brukeren
+  leter når varslerne slutter å oppdatere, ikke i appinnstillingene.
 
   Legitimasjonen er app-global, så dette gjenoppretter alle varslerne samtidig.
   Det står i teksten, slik at ingen tror de må reparere sju ganger.
@@ -34,23 +33,40 @@
   .np summary { cursor: pointer; opacity: 0.75; }
   .np ol { padding-left: 20px; margin: 8px 0 0; }
   .np li { margin-bottom: 5px; }
+  .np .addon { border: 1px solid rgba(31,143,255,0.45); border-radius: 8px;
+              padding: 10px 12px; margin: 0 0 4px; font-size: 0.85em; }
+  .np .addon b { display: block; }
+  .np .addon ol { margin-top: 4px; }
+  .np .addon a { color: #1f8fff; }
+  .np ul { padding-left: 20px; margin: 8px 0 0; }
+  .np .chrome-warn { border-left: 3px solid #c0392b; background: rgba(192,57,43,0.10);
+              padding: 8px 10px; border-radius: 6px; margin: 10px 0 0; font-size: 0.82em; }
+  .np .why { background: rgba(128,128,128,0.12); border-radius: 8px; padding: 9px 11px;
+              margin-top: 16px; font-size: 0.82em; }
+  .np .hidden { display: none; }
 </style>
 
 <div class="np">
   <p class="intro" id="intro"></p>
   <p class="scope" id="scope"></p>
-  <p class="scope" id="extTip" style="margin-bottom:2px"></p>
-  <p class="scope" style="margin-top:0"><a id="extLink" target="_blank" rel="noopener"></a></p>
 
-  <label for="curl" id="curlLabel"></label>
-  <textarea id="curl" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
-  <div id="curlNote" class="scope" style="margin:6px 0 0; min-height:1em;"></div>
+  <div class="addon">
+    <b id="addonTitle"></b>
+    <ol>
+      <li><span id="addonStep1"></span> <a id="addonLink" target="_blank" rel="noopener"></a></li>
+      <li id="addonStep2"></li>
+      <li id="addonStep3"></li>
+      <li id="addonStep4"></li>
+    </ol>
+  </div>
 
   <label for="issueToken" id="issueTokenLabel"></label>
   <textarea id="issueToken" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
 
   <label for="cookie" id="cookieLabel"></label>
   <textarea id="cookie" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+
+  <div id="chromeWarn" class="chrome-warn hidden"></div>
 
   <div class="buttons">
     <button type="button" id="test"></button>
@@ -60,16 +76,29 @@
   <div id="result"></div>
 
   <details>
-    <summary id="howtoLabel"></summary>
+    <summary id="troubleTitle"></summary>
+    <ul>
+      <li id="trouble1"></li>
+      <li id="trouble2"></li>
+    </ul>
+  </details>
+
+  <details>
+    <summary id="manualTitle"></summary>
+    <label for="curl" id="curlLabel"></label>
+    <textarea id="curl" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
+    <div id="curlNote" class="scope" style="margin:6px 0 0; min-height:1em;"></div>
     <ol>
       <li id="step1"></li>
       <li id="step2"></li>
       <li id="step3"></li>
       <li id="step4"></li>
       <li id="step5"></li>
-      <li id="step6"></li>
     </ol>
+    <p class="scope" id="manualNote" style="margin-top:8px"></p>
   </details>
+
+  <div class="why"><b id="chromeTitle"></b> <span id="chromeText"></span></div>
 </div>
 
 <script type="text/javascript">
@@ -99,21 +128,32 @@
 
   document.getElementById('intro').textContent = t('repairIntro');
   document.getElementById('scope').textContent = t('repairScope');
-  document.getElementById('extTip').textContent = t('extension');
-  var extLink = document.getElementById('extLink');
-  extLink.textContent = t('extensionLink');
-  extLink.href = 'https://chromewebstore.google.com/detail/jbheemaebmbbjnaflanegabohniepcbp';
-  document.getElementById('curlLabel').textContent = t('curlLabel');
+  // Tekstene har samme id som nøkkelen i pair-seksjonen.
+  var textIds = ['addonTitle', 'addonStep1', 'addonStep2', 'addonStep3', 'addonStep4',
+    'troubleTitle', 'trouble1', 'trouble2', 'manualTitle', 'curlLabel', 'manualNote',
+    'chromeTitle', 'chromeText', 'chromeWarn', 'step1', 'step2', 'step3', 'step4', 'step5'];
+  for (var i = 0; i < textIds.length; i++) {
+    document.getElementById(textIds[i]).textContent = t(textIds[i]);
+  }
+  // Firefox, ikke Chrome: Chrome på Windows binder Google-økten til maskinens
+  // TPM, og verdier kopiert derfra dør etter rundt to og en halv time.
+  var addonLink = document.getElementById('addonLink');
+  addonLink.textContent = t('addonLink');
+  addonLink.href = 'https://addons.mozilla.org/firefox/addon/nest-protect-for-homey/';
   document.getElementById('curlNote').textContent = '';
   document.getElementById('curl').placeholder = t('curlPlaceholder');
   document.getElementById('issueTokenLabel').textContent = t('issueToken');
   document.getElementById('cookieLabel').textContent = t('cookie');
-  document.getElementById('howtoLabel').textContent = t('howto');
   testBtn.textContent = t('test');
   saveBtn.textContent = t('save');
-  for (var i = 1; i <= 6; i++) {
-    document.getElementById('step' + i).textContent = t('step' + i);
+
+  // Bare Chrome setter fedcm_enabled=true i issueToken-adressen.
+  var chromeWarnEl = document.getElementById('chromeWarn');
+  function checkBrowser() {
+    var fromChrome = issueTokenEl.value.indexOf('fedcm_enabled=true') >= 0;
+    chromeWarnEl.className = fromChrome ? 'chrome-warn' : 'chrome-warn hidden';
   }
+  issueTokenEl.addEventListener('input', checkBrowser);
 
   // Begge feltene fylles ut. Et tomt cookie-felt så ut som om legitimasjonen
   // var borte, og gjorde et trykk på Lagre til en feilmelding i stedet for en
@@ -123,6 +163,7 @@
     if (error || !value) return;
     if (value.issueToken) issueTokenEl.value = value.issueToken;
     if (value.cookie) cookieEl.value = value.cookie;
+    checkBrowser();
   });
 
   function busy(on) {
@@ -137,7 +178,7 @@
     };
   }
 
-  // Lim inn «Copy as cURL» fra DevTools, så fylles feltene under ut. Samme
+  // Lim inn «Kopier som cURL» fra utviklerverktøyene, så fylles feltene ut. Samme
   // tolkning som lib/curl-paste.js; visningen kan ikke importere moduler.
   function stripCaret(text) {
     var s = String(text || '');
@@ -176,6 +217,18 @@
       var at = s.indexOf(marks[m]);
       if (at >= 0) { var v = quotedAfter(s, at + marks[m].length); if (v) { cookie = v.trim(); break; } }
     }
+    // Firefox legger cookien i en header, -H "Cookie: …", ikke i -b.
+    if (!cookie) {
+      var lower = s.toLowerCase(), c = lower.indexOf('cookie:');
+      while (c >= 0) {
+        var q = s.charAt(c - 1);
+        if (q === "'" || q === '"') {
+          var shut = s.indexOf(q, c);
+          if (shut > c) { cookie = s.slice(c + 7, shut).trim(); break; }
+        }
+        c = lower.indexOf('cookie:', c + 7);
+      }
+    }
     return { issueToken: token, cookie: cookie };
   }
 
@@ -187,6 +240,7 @@
     var parsed = parseCurl(raw);
     if (parsed.issueToken) issueTokenEl.value = parsed.issueToken;
     if (parsed.cookie) cookieEl.value = parsed.cookie;
+    checkBrowser();
     curlNoteEl.textContent = (parsed.issueToken && parsed.cookie) ? t('curlOk') : t('curlMiss');
   });
 

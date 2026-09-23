@@ -54,9 +54,23 @@
            background: #b3261e; }
     .dot.on { background: #157a3c; }
 
+    .addon { border: 1px solid rgba(31,143,255,.45); border-radius: 10px;
+             padding: 11px 13px; margin: 0 0 6px; font-size: 13px; line-height: 1.5; }
+    .addon-title { font-weight: 600; }
+    .addon ol { margin-top: 6px; }
+    .addon a { color: #1f8fff; }
+
+    /* Verdier fra Chrome virker i et par timer. Det skal brukeren få vite
+       før de lagres, ikke når forbindelsen faller ut i kveld. */
+    .chrome-warn { border-left: 3px solid #b3261e; background: rgba(179,38,30,.10);
+                   padding: 9px 11px; border-radius: 6px; margin: 10px 0 0;
+                   font-size: 12.5px; line-height: 1.5; }
+    .why { background: rgba(128,128,128,.12); border-radius: 8px; padding: 10px 12px;
+           margin-top: 14px; font-size: 12.5px; line-height: 1.5; }
+
     details { margin-top: 14px; font-size: 13px; line-height: 1.6; }
     summary { cursor: pointer; opacity: .75; }
-    ol { padding-left: 20px; margin: 10px 0 0; }
+    ol, ul { padding-left: 20px; margin: 10px 0 0; }
     li { margin-bottom: 6px; }
     code { background: rgba(128,128,128,.18); padding: 1px 5px; border-radius: 4px;
            font-family: ui-monospace, monospace; font-size: 12px; }
@@ -71,9 +85,16 @@
 
 <div class="warn" data-i18n="settings.warning"></div>
 
-<label class="field" for="curl" data-i18n="settings.curlLabel"></label>
-<textarea id="curl" spellcheck="false" autocomplete="off" autocapitalize="off" data-i18n-ph="settings.curlPlaceholder"></textarea>
-<div id="curlNote" class="muted" style="margin:6px 0 4px; min-height:17px;"></div>
+<!-- Tillegget er hovedveien: færrest steg og ingen utviklerverktøy. -->
+<div class="addon">
+  <div class="addon-title" data-i18n="settings.addonTitle"></div>
+  <ol>
+    <li><span data-i18n="settings.addonStep1"></span> <a id="addonLink" data-i18n="settings.addonLink" target="_blank" rel="noopener"></a></li>
+    <li data-i18n="settings.addonStep2"></li>
+    <li data-i18n="settings.addonStep3"></li>
+    <li data-i18n="settings.addonStep4"></li>
+  </ol>
+</div>
 
 <label class="field" for="issueToken" data-i18n="settings.issueToken"></label>
 <textarea id="issueToken" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
@@ -81,24 +102,40 @@
 <label class="field" for="cookie" data-i18n="settings.cookie"></label>
 <textarea id="cookie" spellcheck="false" autocomplete="off" autocapitalize="off"></textarea>
 
+<div id="chromeWarn" class="chrome-warn hidden" data-i18n="settings.chromeWarn"></div>
+
 <button class="action" id="test" data-i18n="settings.test"></button>
 <button class="action primary" id="save" data-i18n="settings.save"></button>
 
 <div id="msgbox"><span id="spin" class="spin hidden"></span><span id="msg"></span></div>
 
 <details>
-  <summary data-i18n="settings.howto"></summary>
-  <p class="hint" data-i18n="settings.extension" style="margin-top:10px"></p>
-  <p style="margin:4px 0 2px"><a id="extLink" data-i18n="settings.extensionLink" target="_blank" rel="noopener"></a></p>
+  <summary data-i18n="settings.troubleTitle"></summary>
+  <ul>
+    <li data-i18n="settings.trouble1"></li>
+    <li data-i18n="settings.trouble2"></li>
+  </ul>
+</details>
+
+<details>
+  <summary data-i18n="settings.manualTitle"></summary>
+  <label class="field" for="curl" data-i18n="settings.curlLabel"></label>
+  <textarea id="curl" spellcheck="false" autocomplete="off" autocapitalize="off" data-i18n-ph="settings.curlPlaceholder"></textarea>
+  <div id="curlNote" class="muted" style="margin:6px 0 4px; min-height:17px;"></div>
   <ol>
     <li data-i18n="settings.step1"></li>
     <li data-i18n="settings.step2"></li>
     <li data-i18n="settings.step3"></li>
     <li data-i18n="settings.step4"></li>
     <li data-i18n="settings.step5"></li>
-    <li data-i18n="settings.step6"></li>
   </ol>
+  <p class="muted" data-i18n="settings.manualNote"></p>
 </details>
+
+<div class="why">
+  <strong data-i18n="settings.chromeTitle"></strong>
+  <span data-i18n="settings.chromeText"></span>
+</div>
 
 <h3 data-i18n="settings.status"></h3>
 <div class="card">
@@ -128,11 +165,19 @@
       el.placeholder = T(el.getAttribute('data-i18n-ph'));
     }
 
-    // Direkte butikklenke. Søk i Chrome Web Store finner ikke en fersk
-    // publisering på flere dager, så vi peker rett på oppføringen.
-    const STORE_URL = 'https://chromewebstore.google.com/detail/jbheemaebmbbjnaflanegabohniepcbp';
-    const extLink = $('extLink');
-    if (extLink) extLink.href = STORE_URL;
+    // Firefox, ikke Chrome: Chrome på Windows binder Google-økten til
+    // maskinens TPM, og verdier kopiert derfra dør etter rundt to og en halv
+    // time. Firefox har ikke den bindingen.
+    const ADDON_URL = 'https://addons.mozilla.org/firefox/addon/nest-protect-for-homey/';
+    $('addonLink').href = ADDON_URL;
+
+    // Bare Chrome setter fedcm_enabled=true i issueToken-adressen, så den
+    // avslører hvor verdiene kom fra før de lagres.
+    function checkBrowser() {
+      const fromChrome = $('issueToken').value.includes('fedcm_enabled=true');
+      $('chromeWarn').className = fromChrome ? 'chrome-warn' : 'chrome-warn hidden';
+    }
+    $('issueToken').addEventListener('input', checkBrowser);
 
     function show(text, ok) {
       $('msg').textContent = text || '';
@@ -151,14 +196,18 @@
     // Leses hver for seg. Et samlet objekt ville latt en halvferdig utfylling
     // overskrive den andre verdien med tom streng.
     let loadedCookie = '';
-    Homey.get('issueToken', (err, value) => { if (!err && value) $('issueToken').value = value; });
+    Homey.get('issueToken', (err, value) => {
+      if (err || !value) return;
+      $('issueToken').value = value;
+      checkBrowser();
+    });
     Homey.get('cookie', (err, value) => {
       if (err || !value) return;
       $('cookie').value = value;
       loadedCookie = value;
     });
 
-    // Lim inn en «Copy as cURL» fra DevTools, så fylles begge feltene under ut.
+    // Lim inn en «Kopier som cURL» fra utviklerverktøyene, så fylles begge feltene ut.
     // Samme tolkning som lib/curl-paste.js, holdt bevisst kort her fordi
     // innstillingssiden ikke kan importere moduler. Kontrolltegn sjekkes tegn
     // for tegn, aldri med en regex bygget av escape-koder.
@@ -199,6 +248,18 @@
         var at = s.indexOf(marks[m]);
         if (at >= 0) { var v = quotedAfter(s, at + marks[m].length); if (v) { cookie = v.trim(); break; } }
       }
+      // Firefox legger cookien i en header, -H "Cookie: …", ikke i -b.
+      if (!cookie) {
+        var lower = s.toLowerCase(), c = lower.indexOf('cookie:');
+        while (c >= 0) {
+          var q = s.charAt(c - 1);
+          if (q === "'" || q === '"') {
+            var shut = s.indexOf(q, c);
+            if (shut > c) { cookie = s.slice(c + 7, shut).trim(); break; }
+          }
+          c = lower.indexOf('cookie:', c + 7);
+        }
+      }
       return { issueToken: token, cookie: cookie };
     }
 
@@ -208,6 +269,7 @@
       const parsed = parseCurl(raw);
       if (parsed.issueToken) $('issueToken').value = parsed.issueToken;
       if (parsed.cookie) $('cookie').value = parsed.cookie;
+      checkBrowser();
       $('curlNote').textContent = (parsed.issueToken && parsed.cookie)
         ? T('settings.curlOk')
         : T('settings.curlMiss');

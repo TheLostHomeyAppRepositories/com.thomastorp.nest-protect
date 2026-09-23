@@ -13,7 +13,7 @@ const WAIT_TIMEOUT_MS = 30000;
 
 class ProtectDriver extends Homey.Driver {
   async onInit() {
-    this.log('Nest Protect-driver startet');
+    this.log('Nest Protect driver started');
   }
 
   // Reparasjon: ny innlogging mot Nest, startet fra enheten selv.
@@ -23,7 +23,7 @@ class ProtectDriver extends Homey.Driver {
   // alle varslerne samtidig — det står i visningen, slik at ingen tror de må
   // gjøre det sju ganger.
   async onRepair(session, device) {
-    this.log(`Reparasjon startet fra ${device.getName()}`);
+    this.log(`Repair started from ${device.getName()}`);
 
     // Begge verdiene fylles ut på forhånd. Første utgave lot cookie-feltet stå
     // tomt for å slippe å sende hemmeligheten ut i grensesnittet, men da så det
@@ -54,7 +54,7 @@ class ProtectDriver extends Homey.Driver {
 
       await this.homey.settings.set(SETTING_ISSUE_TOKEN, issueToken);
       await this.homey.settings.set(SETTING_COOKIE, cookie);
-      this.log('Ny legitimasjon lagret fra reparasjon');
+      this.log('New credentials saved from repair');
       return { ok: true };
     });
   }
@@ -72,7 +72,7 @@ class ProtectDriver extends Homey.Driver {
 
     if (states.size === 0) throw new Error(this._explainEmpty(app));
 
-    this.log(`Paring fant ${states.size} varsler(e)`);
+    this.log(`Pairing found ${states.size} alarm(s)`);
 
     return [...states.values()].map(({ state, label }) => ({
       name: label,
@@ -98,7 +98,7 @@ class ProtectDriver extends Homey.Driver {
     if (!status.configured) return this.homey.__('error.notConfigured');
 
     if (!status.connected) {
-      if (status.lastError) this.error(`Paring uten forbindelse: ${status.lastError}`);
+      if (status.lastError) this.error(`Pairing without a connection: ${status.lastError}`);
       return this.homey.__('error.pairNoConnection');
     }
 
