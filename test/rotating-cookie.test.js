@@ -3,22 +3,23 @@
 const test = require('node:test');
 const assert = require('node:assert');
 
-const { fetchAccessToken, stripRotatingCookie } = require('../lib/nest-auth');
+const { fetchAccessToken } = require('../lib/nest-auth');
 
-// __Secure-3PSIDTS fornyes normalt av nettleseren hvert kvarter. Vi kan ikke
-// fornye den, og Google avslutter økten når vår kopi blir for gammel. To
-// brukere mistet forbindelsen på tredje fornyelse, rundt to og en halv time
-// etter at de limte inn. Testene her holder cookien ute av alle tre veiene
-// den kan komme inn: det brukeren limer inn, det vi sender, og det Google
-// setter i svaret.
+// Vakthund mot en feil vi allerede har gjort. I 1.3.5 fjernet vi
+// __Secure-3PSIDTS fra krukka, i den tro at den ble foreldet fordi vi ikke
+// kan fornye den slik en nettleser gjør. Den er bundet til __Secure-3PSID:
+// en økt som ble opprettet med cookien krever den, og uten svarer Google
+// USER_LOGGED_OUT med én gang. Rullet tilbake samme dag.
+//
+// Krukka skal sendes videre nøyaktig slik brukeren ga oss den. Vi legger
+// ikke til, og vi fjerner ikke.
 
 const ISSUE_TOKEN = 'https://accounts.google.com/o/oauth2/iframerpc'
   + '?action=issueToken&login_hint=x&client_id=y';
 
-const FULL_JAR = '__Secure-3PSID=a; __Secure-3PAPISID=b; NID=c; '
+const JAR_WITH_TS = '__Secure-3PSID=a; __Secure-3PAPISID=b; NID=c; '
   + '__Host-3PLSID=d; __Secure-3PSIDCC=e; __Secure-3PSIDTS=f';
 
-// Fanger cookien vi faktisk sendte, og lar svaret settes per test.
 function stubFetch({ setCookie = [], body = { access_token: 't' } } = {}) {
   const original = global.fetch;
   const seen = {};
@@ -34,63 +35,38 @@ function stubFetch({ setCookie = [], body = { access_token: 't' } } = {}) {
   return { seen, restore: () => { global.fetch = original; } };
 }
 
-test('stripRotatingCookie fjerner bare __Secure-3PSIDTS', () => {
-  assert.strictEqual(
-    stripRotatingCookie(FULL_JAR),
-    '__Secure-3PSID=a; __Secure-3PAPISID=b; NID=c; __Host-3PLSID=d; __Secure-3PSIDCC=e',
-  );
-});
-
-test('en krukke uten cookien står urørt', () => {
-  const jar = '__Secure-3PSID=a; NID=c';
-  assert.strictEqual(stripRotatingCookie(jar), jar);
-});
-
-test('tom og ugyldig inndata gir tom streng, ikke krasj', () => {
-  for (const value of ['', null, undefined]) {
-    assert.strictEqual(stripRotatingCookie(value), '');
-  }
-});
-
-test('cookien sendes aldri til Google', async () => {
+test('krukka sendes uendret til Google', async () => {
   const { seen, restore } = stubFetch();
   try {
-    await fetchAccessToken(ISSUE_TOKEN, FULL_JAR);
-    assert.ok(!seen.cookie.includes('__Secure-3PSIDTS'), seen.cookie);
-    assert.ok(seen.cookie.includes('__Secure-3PSID='));
+    await fetchAccessToken(ISSUE_TOKEN, JAR_WITH_TS);
+    assert.strictEqual(seen.cookie, JAR_WITH_TS);
   } finally { restore(); }
 });
 
-test('den lagrede krukka blir renset ved første fornyelse', async () => {
-  const { restore } = stubFetch();
+test('__Secure-3PSIDTS lagres videre når Google ikke rører den', async () => {
+  const { restore } = stubFetch({ setCookie: ['__Secure-3PSIDCC=rotert; Path=/'] });
   try {
-    const { cookie, rotated } = await fetchAccessToken(ISSUE_TOKEN, FULL_JAR);
-    assert.ok(!cookie.includes('__Secure-3PSIDTS'), cookie);
-    // Fjerningen skal være synlig i loggen, ellers er en stille endring av
-    // brukerens eneste kopi umulig å spore i en diagnoserapport.
-    assert.deepStrictEqual(rotated, ['__Secure-3PSIDTS']);
-  } finally { restore(); }
-});
-
-test('Google får ikke satt cookien tilbake i svaret', async () => {
-  const { restore } = stubFetch({
-    setCookie: [
-      '__Secure-3PSIDTS=ny; Path=/; Secure; HttpOnly',
-      '__Secure-3PSIDCC=rotert; Path=/; Secure',
-    ],
-  });
-  try {
-    const { cookie } = await fetchAccessToken(ISSUE_TOKEN, FULL_JAR);
-    assert.ok(!cookie.includes('__Secure-3PSIDTS'), cookie);
-    // Resten av rotasjonen skal fortsatt virke.
+    const { cookie } = await fetchAccessToken(ISSUE_TOKEN, JAR_WITH_TS);
+    assert.ok(cookie.includes('__Secure-3PSIDTS=f'), cookie);
     assert.ok(cookie.includes('__Secure-3PSIDCC=rotert'), cookie);
   } finally { restore(); }
 });
 
-test('øktnøkkelen overlever, ellers ville krukka vært ubrukelig', async () => {
-  const { restore } = stubFetch({ setCookie: ['__Secure-3PSIDTS=ny; Path=/'] });
+test('en rotert __Secure-3PSIDTS fra Google tas imot', async () => {
+  const { restore } = stubFetch({ setCookie: ['__Secure-3PSIDTS=ny; Path=/; Secure'] });
   try {
-    const { cookie } = await fetchAccessToken(ISSUE_TOKEN, FULL_JAR);
-    assert.ok(cookie.includes('__Secure-3PSID=a'), cookie);
+    const { cookie, rotated } = await fetchAccessToken(ISSUE_TOKEN, JAR_WITH_TS);
+    assert.ok(cookie.includes('__Secure-3PSIDTS=ny'), cookie);
+    assert.deepStrictEqual(rotated, ['__Secure-3PSIDTS']);
+  } finally { restore(); }
+});
+
+test('en krukke uten cookien får den ikke oppfunnet', async () => {
+  const jar = '__Secure-3PSID=a; NID=c';
+  const { seen, restore } = stubFetch();
+  try {
+    const { cookie } = await fetchAccessToken(ISSUE_TOKEN, jar);
+    assert.strictEqual(seen.cookie, jar);
+    assert.ok(!cookie.includes('__Secure-3PSIDTS'), cookie);
   } finally { restore(); }
 });
