@@ -10,3 +10,4 @@ lib/credentials.js
 
 # Chrome-utvidelsens opplastingspakke bygges ved behov
 browser-extension/*.zip
+browser-extension/dist/

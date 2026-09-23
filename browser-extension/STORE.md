@@ -59,3 +59,52 @@ Certify all three:
 
 **Privacy policy URL**
 https://github.com/torp93/homey-nest-protect/blob/main/browser-extension/PRIVACY.md
+
+# addons.mozilla.org listing (Firefox)
+
+Submitted 23 September 2026 as version 0.3.0. Build with `node build.js` and
+upload `dist/nest-protect-setup-helper-firefox-<version>.zip`. Platforms:
+Firefox only, not Android. Source code submission: No (files are copied
+unchanged, nothing is minified or bundled).
+
+**Add-on URL**
+nest-protect-for-homey
+
+**Summary** (250 characters max)
+Copies the issue token and cookie the Nest Protect app for Homey needs from your signed-in browser. Nothing leaves your computer.
+
+**Description**
+Setting up the Nest Protect app for Homey normally means opening the developer tools, finding one network request, and copying values out of it by hand. This add-on does that part for you.
+
+1. Open home.nest.com. Click the shield in the address bar and turn Enhanced Tracking Protection off for that site, otherwise Firefox keeps your Google sign-in away from the page.
+2. Sign in with Google and wait for your home to load.
+3. Click the add-on icon and copy the issue token and the cookie into the Nest Protect app settings in Homey, then test the connection.
+
+For the longest-lasting connection, copy the values right after signing in, then close the window without signing out.
+
+How it works, privacy, the cookie warning, the non-affiliation line and the
+source link are the same as in the Chrome description above, with Firefox in
+place of Chrome.
+
+**Categories**
+My add-on doesn't fit into any of the categories
+
+**Support website**
+https://github.com/torp93/homey-nest-protect/issues
+
+**License**
+MIT License
+
+**Privacy policy**
+The text of PRIVACY.md, with Firefox in place of Chrome.
+
+**Notes to reviewer**
+Explain that the add-on serves the open-source Homey app; that background.js
+listens with webRequest.onSendHeaders on exactly
+https://accounts.google.com/o/oauth2/iframerpc* and acts only on the
+issueToken action; that the URL and Cookie header go to storage.session in
+memory only and reach the clipboard only on a Copy click; that there are no
+network requests, remote code or analytics, hence data_collection_permissions
+"none"; why each host permission is needed; and that the code is shared with
+the Chrome Web Store version. To test: sign in on home.nest.com with Enhanced
+Tracking Protection off for that site, then open the popup.

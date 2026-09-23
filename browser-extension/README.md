@@ -13,6 +13,20 @@ A newly published listing can take a few days to show up in Web Store *search*,
 so use the direct link above until then. To install manually instead, see
 [Install for testing](#install-for-testing) below.
 
+## Firefox
+
+The same helper is built for Firefox from this folder. `node build.js` writes
+`dist/firefox/` and a zip for addons.mozilla.org; only the manifest differs
+(`manifest.firefox.json`). The listing is in review.
+
+Firefox needs one extra step: on home.nest.com, click the shield in the address
+bar and turn Enhanced Tracking Protection off for that site. Otherwise Firefox
+keeps your Google sign-in away from the embedded Google frame and the request
+carries no session cookie. The popup says so when it happens.
+
+To try it before it is listed: open `about:debugging#/runtime/this-firefox`,
+choose **Load Temporary Add-on**, and pick `dist/firefox/manifest.json`.
+
 ## How it works
 
 When home.nest.com asks Google for a token, the extension notices that request

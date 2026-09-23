@@ -1,0 +1,42 @@
+{
+  "manifest_version": 3,
+  "name": "Nest Protect for Homey — setup helper",
+  "version": "0.3.0",
+  "description": "Copies the issue token and cookie the Nest Protect Homey app needs from your signed-in browser. Nothing leaves your PC.",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "nest-protect-setup@torp93.github.io",
+      "strict_min_version": "142.0",
+      "data_collection_permissions": {
+        "required": ["none"]
+      }
+    }
+  },
+  "permissions": [
+    "webRequest",
+    "storage"
+  ],
+  "host_permissions": [
+    "https://accounts.google.com/*",
+    "https://home.nest.com/*"
+  ],
+  "background": {
+    "scripts": ["shared.js", "background.js"]
+  },
+  "action": {
+    "default_title": "Nest Protect for Homey",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

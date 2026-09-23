@@ -55,3 +55,28 @@ test('verdiene består appens egen validering', () => {
   const cookie = cookieFromHeaders([{ name: 'Cookie', value: 'SSID=a; __Secure-3PSID=b' }]);
   assert.deepEqual(config.validate({ issueToken: TOKEN, cookie }), []);
 });
+
+// Firefox og Chrome deler all kode; bare manifestet skiller seg. Glipper de
+// fra hverandre, virker utvidelsen i den ene nettleseren og ikke den andre,
+// uten at noe feiler før en bruker prøver.
+const chromeManifest = require('../browser-extension/manifest.json');
+const firefoxManifest = require('../browser-extension/manifest.firefox.json');
+
+test('Firefox-manifestet har samme tillatelser som Chrome', () => {
+  assert.deepEqual(firefoxManifest.permissions, chromeManifest.permissions);
+  assert.deepEqual(firefoxManifest.host_permissions, chromeManifest.host_permissions);
+  assert.deepEqual(firefoxManifest.action, chromeManifest.action);
+});
+
+// Firefox har ingen service worker for utvidelser, og der finnes ikke
+// importScripts. shared.js må derfor lastes før bakgrunnsskriptet.
+test('Firefox laster shared.js før bakgrunnsskriptet', () => {
+  assert.deepEqual(firefoxManifest.background, { scripts: ['shared.js', 'background.js'] });
+});
+
+// Uten id og erklæring om datainnsamling signerer ikke addons.mozilla.org.
+test('Firefox-manifestet kan signeres av addons.mozilla.org', () => {
+  const gecko = firefoxManifest.browser_specific_settings.gecko;
+  assert.match(gecko.id, /^[^@\s]+@[^@\s]+$/);
+  assert.deepEqual(gecko.data_collection_permissions, { required: ['none'] });
+});

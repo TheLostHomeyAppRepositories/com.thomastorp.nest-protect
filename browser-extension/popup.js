@@ -3,6 +3,26 @@
 (() => {
   const { hasSessionCookie, cookieNames } = self.NestSetup;
   const $ = (id) => document.getElementById(id);
+  const api = globalThis.browser || globalThis.chrome;
+  const isFirefox = navigator.userAgent.includes('Firefox/');
+  const HOSTS = { origins: ['https://accounts.google.com/*', 'https://home.nest.com/*'] };
+
+  // Firefox lar brukeren trekke tilbake nettstedstilgang etter installasjon.
+  // Uten den ser utvidelsen aldri forespørselen, og popupen ville stått og
+  // ventet for alltid uten å si hvorfor.
+  async function hasHostAccess() {
+    try {
+      return await api.permissions.contains(HOSTS);
+    } catch (error) {
+      return true;
+    }
+  }
+
+  // Firefox skiller cookies per nettsted. Er sporingsbeskyttelsen på for
+  // home.nest.com, får Google-rammen der ingen innlogging, og forespørselen
+  // går uten økt-cookie. Det var nøyaktig det som stoppet første test.
+  const FIREFOX_ETP_HINT = ' In Firefox, click the shield in the address bar on home.nest.com, '
+    + 'turn Enhanced Tracking Protection off for that site, and reload.';
 
   // Google roterer delene av cookien i løpet av minutter. En fangst som har
   // ligget en stund kan allerede være foreldet, så alderen vises og brukeren
@@ -20,7 +40,7 @@
   }
 
   async function captured() {
-    return chrome.storage.session.get(['issueToken', 'cookie', 'capturedAt']);
+    return api.storage.session.get(['issueToken', 'cookie', 'capturedAt']);
   }
 
   async function copy(text, what) {
@@ -31,6 +51,14 @@
   async function render() {
     const { issueToken, cookie, capturedAt } = await captured();
     problem('');
+
+    const access = await hasHostAccess();
+    $('grant').hidden = access;
+    if (!access) {
+      show(false);
+      problem('The extension is not allowed to see google.com and home.nest.com yet.');
+      return;
+    }
 
     if (!issueToken) {
       show(false);
@@ -43,9 +71,10 @@
     if (!hasSessionCookie(cookie)) {
       show(false);
       const names = cookieNames(cookie);
+      const hint = isFirefox ? FIREFOX_ETP_HINT : '';
       problem(names.length
-        ? `The request had no Google session cookie. Cookies sent: ${names.join(', ')}.`
-        : 'The request carried no cookies at all. Sign in to Google on home.nest.com and reload the page.');
+        ? `The request had no Google session cookie. Cookies sent: ${names.join(', ')}.${hint}`
+        : `The request carried no cookies at all. Sign in to Google on home.nest.com and reload the page.${hint}`);
       return;
     }
 
@@ -56,7 +85,14 @@
       : `Captured ${minutes < 1 ? 'just now' : `${minutes} min ago`}.`;
   }
 
-  $('open').addEventListener('click', () => chrome.tabs.create({ url: 'https://home.nest.com/' }));
+  $('open').addEventListener('click', () => api.tabs.create({ url: 'https://home.nest.com/' }));
+
+  // Må kalles direkte fra klikket; Firefox godtar bare tillatelsesforespørsler
+  // som følger av en brukerhandling.
+  $('grant').addEventListener('click', async () => {
+    await api.permissions.request(HOSTS);
+    render();
+  });
 
   $('copyToken').addEventListener('click', async () => {
     const { issueToken } = await captured();
@@ -69,14 +105,14 @@
   });
 
   $('clear').addEventListener('click', async () => {
-    await chrome.storage.session.remove(['issueToken', 'cookie', 'capturedAt']);
+    await api.storage.session.remove(['issueToken', 'cookie', 'capturedAt']);
     await navigator.clipboard.writeText('');
     $('status').textContent = '';
     render();
   });
 
   // Oppdager en ny fangst når Nest-siden lastes på nytt mens vinduet står åpent.
-  chrome.storage.onChanged.addListener((changes, area) => {
+  api.storage.onChanged.addListener((changes, area) => {
     if (area === 'session' && (changes.issueToken || changes.cookie)) render();
   });
 
