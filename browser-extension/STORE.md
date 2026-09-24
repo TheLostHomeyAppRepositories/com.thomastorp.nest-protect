@@ -73,18 +73,21 @@ nest-protect-for-homey
 **Summary** (250 characters max)
 Copies the issue token and cookie the Nest Protect app for Homey needs from your signed-in browser. Nothing leaves your computer.
 
-**Description**
+**Description** (updated 24 September 2026)
 Setting up the Nest Protect app for Homey normally means opening the developer tools, finding one network request, and copying values out of it by hand. This add-on does that part for you.
 
-1. Open home.nest.com. Click the shield in the address bar and turn Enhanced Tracking Protection off for that site, otherwise Firefox keeps your Google sign-in away from the page.
-2. Sign in with Google and wait for your home to load.
-3. Click the add-on icon and copy the issue token and the cookie into the Nest Protect app settings in Homey, then test the connection.
+1. Open home.nest.com in Firefox, sign in with Google and wait until your home appears.
+2. Click the add-on icon. If it asks for access to google.com and home.nest.com, allow it.
+3. Copy the issue token and the cookie into the Nest Protect app settings in Homey, then test the connection.
+4. Close the window afterwards, but don't sign out of Google. Signing out ends the session.
 
-For the longest-lasting connection, copy the values right after signing in, then close the window without signing out.
+If the add-on finds nothing, the page is reusing its own session. Click the shield icon at the far left of the address bar, choose Clear cookies and site data (this only affects home.nest.com; your Google sign-in stays), and reload. If it then says the cookie is missing, switch off Enhanced Tracking Protection in the same panel and reload.
+
+Why Firefox: Chrome and Edge tie your Google sign-in to your computer's security chip, so values copied from them stop working after about two and a half hours. Firefox doesn't, so the values keep working.
 
 How it works, privacy, the cookie warning, the non-affiliation line and the
-source link are the same as in the Chrome description above, with Firefox in
-place of Chrome.
+source link follow, as in the Chrome description above with Firefox in place of
+Chrome.
 
 **Categories**
 My add-on doesn't fit into any of the categories
