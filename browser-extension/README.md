@@ -37,9 +37,13 @@ from Chrome or Edge.
   Google for a token. Click the shield icon at the far left of the address bar,
   choose Clear cookies and site data (this only affects home.nest.com; your
   Google sign-in stays), reload and sign in if asked.
-- **The add-on says the cookie is missing:** switch off Enhanced Tracking
-  Protection in the same shield panel and reload. It can usually stay on:
-  Firefox grants the Google frame access when you click Sign in with Google.
+- **The add-on says the cookie is missing:** clear the site data as above,
+  reload and sign in again. Keep Enhanced Tracking Protection on: Firefox grants
+  the Google frame access when you click Sign in with Google, and turning
+  protection off has been seen to make the sign-in loop.
+- **Copying by hand:** in the developer tools, turn on Persist Logs (gear icon
+  in the Network tab) before signing in. The `iframerpc` request only appears
+  during sign-in and is cleared when the page navigates.
 
 ## How it works
 

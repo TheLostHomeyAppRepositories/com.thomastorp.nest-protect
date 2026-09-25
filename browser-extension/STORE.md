@@ -81,7 +81,7 @@ Setting up the Nest Protect app for Homey normally means opening the developer t
 3. Copy the issue token and the cookie into the Nest Protect app settings in Homey, then test the connection.
 4. Close the window afterwards, but don't sign out of Google. Signing out ends the session.
 
-If the add-on finds nothing, the page is reusing its own session. Click the shield icon at the far left of the address bar, choose Clear cookies and site data (this only affects home.nest.com; your Google sign-in stays), and reload. If it then says the cookie is missing, switch off Enhanced Tracking Protection in the same panel and reload.
+If the add-on finds nothing, the page is reusing its own session. Click the shield icon at the far left of the address bar, choose Clear cookies and site data (this only affects home.nest.com; your Google sign-in stays), and reload. Keep Enhanced Tracking Protection on; turning it off can make the Google sign-in loop.
 
 Why Firefox: Chrome and Edge tie your Google sign-in to your computer's security chip, so values copied from them stop working after about two and a half hours. Firefox doesn't, so the values keep working.
 

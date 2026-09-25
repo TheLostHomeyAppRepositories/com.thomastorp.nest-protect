@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Nest Protect for Homey — setup helper",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Copies the issue token and cookie the Nest Protect Homey app needs from your signed-in browser. Nothing leaves your PC.",
   "browser_specific_settings": {
     "gecko": {

@@ -18,11 +18,12 @@
     }
   }
 
-  // Firefox skiller cookies per nettsted. Er sporingsbeskyttelsen på for
-  // home.nest.com, får Google-rammen der ingen innlogging, og forespørselen
-  // går uten økt-cookie. Det var nøyaktig det som stoppet første test.
+  // En forespørsel uten økt-cookie betyr som regel at siden gjenbrukte sin egen
+  // innlogging i stedet for å spørre Google. Å tømme nettstedsdata tvinger en ny
+  // innlogging. Rådet var tidligere å slå av sporingsbeskyttelsen, men en bruker
+  // fikk en innloggingsløkke av det, og begge våre egne fangster virket med den på.
   const FIREFOX_ETP_HINT = ' In Firefox, click the shield in the address bar on home.nest.com, '
-    + 'turn Enhanced Tracking Protection off for that site, and reload.';
+    + 'choose Clear cookies and site data, reload and sign in again. Keep Enhanced Tracking Protection on.';
 
   // Google roterer delene av cookien i løpet av minutter. En fangst som har
   // ligget en stund kan allerede være foreldet, så alderen vises og brukeren
