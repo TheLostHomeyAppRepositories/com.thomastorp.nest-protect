@@ -30,6 +30,21 @@ const OFFLINE_ALERT_MS = 60 * 60 * 1000;
 // det er ubrukelig som røykvarsler.
 const REAUTH_RETRY_MS = 30 * 60 * 1000;
 
+// Innstillingssiden og reparasjonen lagrer issue token og cookie som to
+// separate innstillinger. Startet appen innloggingen på den første, logget den
+// inn med ny adresse og gammel cookie, fikk USER_LOGGED_OUT og la seg til å
+// vente en halvtime. Sett i en diagnoserapport: en riktig reparasjon som så
+// utlogget ut til brukeren trykket oppdater. Kort nok til at ingen merker det,
+// langt nok til at begge verdiene rekker å lande.
+const SETTINGS_SETTLE_MS = 1500;
+
+// Hvor lenge et nettverksbrudd får vare før enhetene merkes utilgjengelige.
+// Et brudd mot Nest varer som regel noen minutter og løser seg selv, og en
+// bruker som så alle varslerne blinke utilgjengelig meldte det som at appen
+// «kobler fra etter 15 minutter». Innloggingsfeil venter ikke: de krever at
+// brukeren gjør noe, og da skal det synes med en gang.
+const UNAVAILABLE_GRACE_MS = 5 * 60 * 1000;
+
 // Hvor mange feil på rad før vi mistenker at det ikke er nettverket, men
 // adressen vi ringer. Nest flytter transport-verten mellom czfeNN-maskiner
 // uten forvarsel, og en subscribe mot en vert som er tatt ut av drift feiler
@@ -110,7 +125,7 @@ class NestProtectApp extends Homey.App {
       // ikke rive ned en fungerende økt.
       if (key === SETTING_COOKIE
         && this.homey.settings.get(SETTING_COOKIE) === this._writtenCookie) return;
-      this.restart();
+      this.scheduleRestart();
     });
 
     this.start();
@@ -122,7 +137,19 @@ class NestProtectApp extends Homey.App {
     if (this._abort) this._abort.abort();
     if (this._offlineTimer) this.homey.clearTimeout(this._offlineTimer);
     if (this._sleepTimer) this.homey.clearTimeout(this._sleepTimer);
+    if (this._restartTimer) this.homey.clearTimeout(this._restartTimer);
+    if (this._unavailableTimer) this.homey.clearTimeout(this._unavailableTimer);
     this.wake();
+  }
+
+  // Venter til begge verdiene er lagret før appen logger inn på nytt; se
+  // SETTINGS_SETTLE_MS. Hver ny lagring skyver starten litt fram.
+  scheduleRestart() {
+    if (this._restartTimer) this.homey.clearTimeout(this._restartTimer);
+    this._restartTimer = this.homey.setTimeout(() => {
+      this._restartTimer = null;
+      this.restart();
+    }, SETTINGS_SETTLE_MS);
   }
 
   // ---- tilkobling ----
@@ -132,7 +159,13 @@ class NestProtectApp extends Homey.App {
 
     const { issueToken, cookie } = readSettings(this.homey.settings);
     const problems = validate({ issueToken, cookie });
-    if (problems.length > 0) throw new Error(this.homey.__(`error.${problems[0]}`));
+    if (problems.length > 0) {
+      const error = new Error(this.homey.__(`error.${problems[0]}`));
+      // Manglende verdier løser seg ikke av seg selv; enhetene skal vise det
+      // med en gang i stedet for å vente ut nettverksfristen.
+      error.needsUser = true;
+      throw error;
+    }
 
     this._client = new NestClient({
       issueToken,
@@ -317,6 +350,11 @@ class NestProtectApp extends Homey.App {
   // «hent nå» blitt liggende ubrukt i opptil en halvtime, fordi løkka sov i
   // gjenforsøksintervallet etter en avvist innlogging.
   _sleep(ms) {
+    // En vekking som kom mens løkka var opptatt, gjelder denne søvnen.
+    if (this._wakePending) {
+      this._wakePending = false;
+      return Promise.resolve();
+    }
     return new Promise((resolve) => {
       this._wake = () => {
         this.homey.clearTimeout(this._sleepTimer);
@@ -332,8 +370,12 @@ class NestProtectApp extends Homey.App {
     });
   }
 
+  // Vekker løkka hvis den sover, ellers huskes vekkingen til neste søvn.
+  // Uten det gikk en vekking tapt hvis den kom midt i en innlogging, og løkka
+  // la seg etterpå til å sove en halvtime selv om nye verdier lå klare.
   wake() {
     if (this._wake) this._wake();
+    else this._wakePending = true;
   }
 
   // ---- tilstand ut til enhetene ----
@@ -402,19 +444,51 @@ class NestProtectApp extends Homey.App {
     return this._connected;
   }
 
+  // Det enhetene har fått beskjed om, som henger etter isConnected() under et
+  // kort nettverksbrudd. true, false, eller null før noe er meldt.
+  devicesOnline() {
+    return this._announced === undefined ? null : this._announced;
+  }
+
   setConnected(connected, error = null) {
     this._lastError = connected ? null : (error && error.message) || 'unknown error';
+    // Før den tidlige returen: et nettverksbrudd som går over i en
+    // innloggingsfeil, er fortsatt «frakoblet», men skal nå vises med en gang.
+    this._updateAvailability(connected, error);
     if (this._connected === connected) return;
 
     this._connected = connected;
     this.log(connected ? 'Connected to Nest' : `Connection lost: ${this._lastError}`);
 
-    // Enhetene merkes utilgjengelige med en gang. Det er en stille beskjed i
-    // grensesnittet, ikke et varsel, og da er øyeblikkelig riktig.
-    this.protect.emit('connection', connected);
-
     if (connected) this._connectionRestored();
     else this._connectionLost();
+  }
+
+  // Når enhetene skal merkes utilgjengelige; se UNAVAILABLE_GRACE_MS.
+  _updateAvailability(connected, error) {
+    const needsUser = Boolean(error && (error.needsUser
+      || (error instanceof NestAuthError && error.retryable === false)));
+
+    if (connected || needsUser) {
+      if (this._unavailableTimer) {
+        this.homey.clearTimeout(this._unavailableTimer);
+        this._unavailableTimer = null;
+      }
+      this._announce(connected);
+      return;
+    }
+
+    if (this._unavailableTimer || this._announced === false) return;
+    this._unavailableTimer = this.homey.setTimeout(() => {
+      this._unavailableTimer = null;
+      if (this._connected === false) this._announce(false);
+    }, UNAVAILABLE_GRACE_MS);
+  }
+
+  _announce(online) {
+    if (this._announced === online) return;
+    this._announced = online;
+    this.protect.emit('connection', online);
   }
 
   _connectionLost() {

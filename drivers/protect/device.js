@@ -49,7 +49,7 @@ class ProtectDevice extends Homey.Device {
     // virkeligheten ikke har kontakt.
     const known = this.homey.app.states();
     if (known.size > 0) this._onStates(known);
-    else if (this.homey.app.isConnected() === false) this._onConnection(false);
+    else if (this.homey.app.devicesOnline() === false) this._onConnection(false);
 
     this.log(`${this.getName()} ready`);
   }
