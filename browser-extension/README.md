@@ -9,13 +9,16 @@ don't have to dig through the developer tools.
 **From Firefox Add-ons:**
 https://addons.mozilla.org/firefox/addon/nest-protect-for-homey/
 
-The listing is in review at Mozilla. Until it is live, see
-[Install for testing](#install-for-testing) below.
+To try a local build instead, see [Install for testing](#install-for-testing) below.
 
 Then open home.nest.com in Firefox, sign in with Google, wait for your home to
 load, and click the add-on's icon. Copy each value into the Nest Protect app
 settings in Homey and test the connection. Close the window afterwards, but
 don't sign out of Google; signing out ends the session.
+
+Use a Firefox profile you don't browse with every day (create one at
+`about:profiles`), and don't use Google there afterwards. Captures from a
+profile in daily use have been reported to stop working within hours.
 
 ## Why Firefox and not Chrome
 

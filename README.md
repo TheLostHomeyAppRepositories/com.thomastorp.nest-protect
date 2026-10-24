@@ -73,6 +73,12 @@ Google reject the session at once (tried in 1.3.5, reverted in 1.3.6). Firefox
 does not implement DBSC. Copy the values right after signing in, then close the
 window without signing out.
 
+Use a Firefox profile you don't browse with every day (`about:profiles`).
+A capture from a profile that is also used for Gmail, YouTube and the like has
+been reported to drop within hours, while one from an otherwise idle profile
+was still running after a month. Firefox refreshes the session itself while
+you browse, and the copy in Homey seems not to survive that.
+
 The app writes rotated cookies back to its settings automatically — Google
 rotates them on every sign-in, and a client that keeps sending the original
 gets logged out within a few cycles.

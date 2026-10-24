@@ -76,10 +76,10 @@ Copies the issue token and cookie the Nest Protect app for Homey needs from your
 **Description** (updated 24 September 2026)
 Setting up the Nest Protect app for Homey normally means opening the developer tools, finding one network request, and copying values out of it by hand. This add-on does that part for you.
 
-1. Open home.nest.com in Firefox, sign in with Google and wait until your home appears.
+1. Open home.nest.com in Firefox, sign in with Google and wait until your home appears. Use a Firefox profile you don't browse with every day; you can create one at about:profiles.
 2. Click the add-on icon. If it asks for access to google.com and home.nest.com, allow it.
 3. Copy the issue token and the cookie into the Nest Protect app settings in Homey, then test the connection.
-4. Close the window afterwards, but don't sign out of Google. Signing out ends the session.
+4. Close the window afterwards, but don't sign out of Google, and don't use Google in that profile later. Signing out ends the session, and everyday browsing in the same profile can make it stop working.
 
 If the add-on finds nothing, the page is reusing its own session. Click the shield icon at the far left of the address bar, choose Clear cookies and site data (this only affects home.nest.com; your Google sign-in stays), and reload. Keep Enhanced Tracking Protection on; turning it off can make the Google sign-in loop.
 
