@@ -101,20 +101,20 @@
     "presence": {
       "type": "boolean",
       "title": {
-        "en": "Presence",
-        "no": "Tilstedeværelse"
+        "en": "Home",
+        "no": "Hjemme"
       },
       "uiComponent": "sensor",
       "getable": true,
       "setable": false,
       "insights": true,
       "insightsTitleTrue": {
-        "en": "Presence detected",
-        "no": "Tilstedeværelse registrert"
+        "en": "Someone home",
+        "no": "Noen hjemme"
       },
       "insightsTitleFalse": {
-        "en": "No presence",
-        "no": "Ingen til stede"
+        "en": "Nobody home",
+        "no": "Ingen hjemme"
       },
       "icon": "/assets/capability-icons/presence.svg"
     }
@@ -356,12 +356,12 @@
       {
         "id": "presence_detected",
         "title": {
-          "en": "Presence detected",
-          "no": "Tilstedeværelse registrert"
+          "en": "The house became Home",
+          "no": "Huset ble Hjemme"
         },
         "hint": {
-          "en": "Fires when the Protect reports someone present nearby. Wired Protects only; Nest updates this, not a real-time motion sensor.",
-          "no": "Fyrer når varsleren melder at noen er til stede i nærheten. Kun nettdrevne varslere; Nest oppdaterer dette, det er ikke en sanntids bevegelsessensor."
+          "en": "Fires when Nest's Home/Away switches to Home — someone is active in the house. House-wide, wired Protects only; comes within minutes of activity.",
+          "no": "Fyrer når Nests Home/Away går til Hjemme — noen er aktive i huset. Gjelder hele huset, kun nettdrevne varslere; kommer innen minutter etter aktivitet."
         },
         "args": [
           {
@@ -374,12 +374,12 @@
       {
         "id": "presence_cleared",
         "title": {
-          "en": "Presence cleared",
-          "no": "Tilstedeværelse opphørte"
+          "en": "The house became Away",
+          "no": "Huset ble Borte"
         },
         "hint": {
-          "en": "Fires when the Protect no longer reports anyone present. Wired Protects only.",
-          "no": "Fyrer når varsleren ikke lenger melder noen til stede. Kun nettdrevne varslere."
+          "en": "Fires when Nest's Home/Away switches to Away — no activity anywhere in the house. Nest waits about an hour of no activity first, so this is slow by design.",
+          "no": "Fyrer når Nests Home/Away går til Borte — ingen aktivitet noe sted i huset. Nest venter omtrent en time uten aktivitet først, så dette er tregt av natur."
         },
         "args": [
           {
@@ -414,8 +414,8 @@
       {
         "id": "is_present",
         "title": {
-          "en": "Presence !{{is|is not}} detected",
-          "no": "Tilstedeværelse !{{er|er ikke}} registrert"
+          "en": "The house !{{is|is not}} Home",
+          "no": "Huset !{{er|er ikke}} Hjemme"
         },
         "args": [
           {
