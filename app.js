@@ -84,6 +84,10 @@ class NestProtectApp extends Homey.App {
 
     this._client = null;
     this._buckets = [];
+    // motion-probe (testbygg): bøtter som ikke er topaz, holdt atskilt fra
+    // alarmbøttene så parsing og publisering er helt uberørt. Brukes bare til
+    // å logge hva occupancy-kanalen sender.
+    this._probe = [];
     this._whereMap = new Map();
     this._states = new Map();
     // Ukjent, ikke frakoblet. Startet vi med `false`, ville den aller første
@@ -206,6 +210,7 @@ class NestProtectApp extends Homey.App {
     this.log('Settings changed, reconnecting');
     this._client = null;
     this._buckets = [];
+    this._probe = [];
     this._launchedAt = 0;
     this._reauths = 0;
 
@@ -300,9 +305,34 @@ class NestProtectApp extends Homey.App {
     const all = await client.appLaunch();
     this._whereMap = buildWhereMap(all);
     this._buckets = all.filter((b) => String(b.object_key || '').startsWith('topaz.'));
+    this._probe = all.filter((b) => !String(b.object_key || '').startsWith('topaz.')
+      && !String(b.object_key || '').startsWith('where.')
+      && !String(b.object_key || '').startsWith('structure.'));
     this._launchedAt = Date.now();
     this.log(`Fetched ${this._buckets.length} alarm(s)`);
+    this._logProbe('launch', all);
     this.publish();
+  }
+
+  // motion-probe (testbygg): logger alt occupancy-kanalen sender, og hvordan
+  // auto_away/home_away_input på hver varsler ser ut akkurat nå. Går man rundt
+  // i huset og ser ett av disse flippe i sanntid i loggen, finnes signalet —
+  // da kan det mappes. Skjer ingenting mens pathlighten tenner lokalt, er
+  // beviset at Nest ikke sender bevegelse i det hele tatt.
+  _logProbe(phase, buckets) {
+    for (const bucket of buckets) {
+      const key = String(bucket.object_key || '');
+      const value = bucket.value || {};
+      if (!key.startsWith('topaz.') && !key.startsWith('where.') && !key.startsWith('structure.')) {
+        this.log(`[motion-probe] ${phase} ${key} rev=${bucket.object_revision} `
+          + `value=${JSON.stringify(value)}`);
+      }
+      if (key.startsWith('topaz.')) {
+        this.log(`[motion-probe] ${phase} ${key} auto_away=${value.auto_away} `
+          + `home_away_input=${value.home_away_input} `
+          + `wired_or_battery=${value.wired_or_battery} line_power=${value.line_power_present}`);
+      }
+    }
   }
 
   async _listen(client) {
@@ -316,7 +346,10 @@ class NestProtectApp extends Homey.App {
 
     let result;
     try {
-      result = await client.subscribe(subscribeObjects(this._buckets), {
+      // motion-probe (testbygg): occupancy-bøttene er med i revisjonslista slik
+      // at en endring der også vekker subscriben. Uten det ville Nest aldri
+      // fortalt oss at de endret seg.
+      result = await client.subscribe(subscribeObjects([...this._buckets, ...this._probe]), {
         signal: this._abort.signal,
       });
     } finally {
@@ -341,8 +374,22 @@ class NestProtectApp extends Homey.App {
     this._reauths = 0;
     if (result.buckets.length === 0) return;
 
-    this._buckets = mergeBuckets(this._buckets, result.buckets);
-    this.log(`${result.buckets.length} change(s) received`);
+    // motion-probe (testbygg): skill alarmendringer fra occupancy-endringer.
+    // Bare topaz skal inn i _buckets og utløse publish; resten logges.
+    const topazChanges = result.buckets.filter((b) => String(b.object_key || '').startsWith('topaz.'));
+    const probeChanges = result.buckets.filter((b) => this._probe.some(
+      (p) => p.object_key === b.object_key,
+    ));
+    if (probeChanges.length) this._probe = mergeBuckets(this._probe, probeChanges);
+    this._logProbe('change', result.buckets);
+
+    if (topazChanges.length === 0) {
+      this.log(`${result.buckets.length} non-alarm change(s) received`);
+      return;
+    }
+
+    this._buckets = mergeBuckets(this._buckets, topazChanges);
+    this.log(`${topazChanges.length} change(s) received`);
     this.publish();
   }
 
