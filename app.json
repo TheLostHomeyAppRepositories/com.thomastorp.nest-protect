@@ -352,6 +352,42 @@
             ]
           }
         ]
+      },
+      {
+        "id": "presence_detected",
+        "title": {
+          "en": "Presence detected",
+          "no": "Tilstedeværelse registrert"
+        },
+        "hint": {
+          "en": "Fires when the Protect reports someone present nearby. Wired Protects only; Nest updates this, not a real-time motion sensor.",
+          "no": "Fyrer når varsleren melder at noen er til stede i nærheten. Kun nettdrevne varslere; Nest oppdaterer dette, det er ikke en sanntids bevegelsessensor."
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=protect"
+          }
+        ]
+      },
+      {
+        "id": "presence_cleared",
+        "title": {
+          "en": "Presence cleared",
+          "no": "Tilstedeværelse opphørte"
+        },
+        "hint": {
+          "en": "Fires when the Protect no longer reports anyone present. Wired Protects only.",
+          "no": "Fyrer når varsleren ikke lenger melder noen til stede. Kun nettdrevne varslere."
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=protect"
+          }
+        ]
       }
     ],
     "actions": [
@@ -374,6 +410,20 @@
           "en": "Nest !{{is|is not}} connected",
           "no": "Nest !{{er|er ikke}} tilkoblet"
         }
+      },
+      {
+        "id": "is_present",
+        "title": {
+          "en": "Presence !{{is|is not}} detected",
+          "no": "Tilstedeværelse !{{er|er ikke}} registrert"
+        },
+        "args": [
+          {
+            "name": "device",
+            "type": "device",
+            "filter": "driver_id=protect"
+          }
+        ]
       }
     ]
   },

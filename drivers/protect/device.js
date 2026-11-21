@@ -76,6 +76,11 @@ class ProtectDevice extends Homey.Device {
 
     const caps = toCapabilities(state);
 
+    // Fanges før skrivingen: flow-kortene for tilstedeværelse skal fyre på
+    // selve overgangen, ikke på hver avlesning som bekrefter samme verdi.
+    const presenceBefore = this.hasCapability('presence')
+      ? this.getCapabilityValue('presence') : null;
+
     for (const [capability, value] of Object.entries(caps)) {
       if (!this.hasCapability(capability)) continue;
       // Homey stempler bare når verdien faktisk endrer seg, så det koster
@@ -84,9 +89,23 @@ class ProtectDevice extends Homey.Device {
         .catch((error) => this.error(`Could not set ${capability}`, error));
     }
 
+    this._firePresence(presenceBefore, caps.presence);
+
     await this._applyWarnings(state);
     await this._applyInfo(state);
     await this._applyEnergy(state);
+  }
+
+  // Flow-kort for tilstedeværelse: fyrer bare på overgangen, og bare når vi
+  // faktisk har et nytt boolsk svar. null før (enheten hadde ikke flisen ennå,
+  // eller ingen tidligere avlesning) teller ikke som en overgang, og en
+  // uendret verdi fyrer ikke. Device-trigger-kortene matcher selv hvilken
+  // varsler det gjelder, så her sendes bare enheten med.
+  _firePresence(before, after) {
+    if (typeof after !== 'boolean' || before === after || before === null) return;
+    const card = after ? 'presence_detected' : 'presence_cleared';
+    this.homey.flow.getDeviceTriggerCard(card).trigger(this)
+      .catch((error) => this.error(`Could not fire ${card}`, error));
   }
 
   // Manifestet må oppgi batterier fordi alarm_battery brukes, og der står den

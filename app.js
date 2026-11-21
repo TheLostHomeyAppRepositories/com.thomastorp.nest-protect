@@ -657,6 +657,13 @@ class NestProtectApp extends Homey.App {
       .getActionCard('refresh_now')
       .registerRunListener(() => this.refreshNow());
 
+    // Tilstedeværelse-betingelsen. Enheten velges i kortet; vi leser bare den
+    // valgte varslerens flis. Eksplisitt === true: er flisen ennå ukjent, skal
+    // betingelsen svare «ikke til stede», ikke gi null tilbake.
+    this.homey.flow
+      .getConditionCard('is_present')
+      .registerRunListener((args) => args.device.getCapabilityValue('presence') === true);
+
     // Varselnivået har ingen capability å henge på, siden Homey ikke skiller
     // «nesten» fra «nå». Enheten utløser kortet selv når nivået endrer seg.
     // getDeviceTriggerCard, ikke getTriggerCard: kortet har et device-argument
