@@ -84,9 +84,34 @@ class ProtectDevice extends Homey.Device {
         .catch((error) => this.error(`Could not set ${capability}`, error));
     }
 
+    // Hjemme/Borte er hus-nivå (structure.away), ikke et topaz-felt — derfor
+    // leses det her fra appen, ikke fra caps. Bare nettdrevne varslere har
+    // flisen (Nest bruker bare dem til Home/Away-deteksjon). null = ennå ukjent.
+    if (state.wired && this.hasCapability('presence')) {
+      const home = this.homey.app.isHome();
+      if (home !== null) {
+        const before = this.getCapabilityValue('presence');
+        await this.setCapabilityValue('presence', home)
+          .catch((error) => this.error('Could not set presence', error));
+        this._firePresence(before, home);
+      }
+    }
+
     await this._applyWarnings(state);
     await this._applyInfo(state);
     await this._applyEnergy(state);
+  }
+
+  // Flow-kort for tilstedeværelse: fyrer bare på overgangen, og bare når vi
+  // faktisk har et nytt boolsk svar. null før (enheten hadde ikke flisen ennå,
+  // eller ingen tidligere avlesning) teller ikke som en overgang, og en
+  // uendret verdi fyrer ikke. Device-trigger-kortene matcher selv hvilken
+  // varsler det gjelder, så her sendes bare enheten med.
+  _firePresence(before, after) {
+    if (typeof after !== 'boolean' || before === after || before === null) return;
+    const card = after ? 'presence_detected' : 'presence_cleared';
+    this.homey.flow.getDeviceTriggerCard(card).trigger(this)
+      .catch((error) => this.error(`Could not fire ${card}`, error));
   }
 
   // Manifestet må oppgi batterier fordi alarm_battery brukes, og der står den
@@ -105,11 +130,25 @@ class ProtectDevice extends Homey.Device {
   // at du må fjerne og pare dem på nytt — det ville tatt med seg flowene de
   // er brukt i.
   async _migrate(state) {
-    for (const capability of capabilitiesFor(state)) {
+    const desired = capabilitiesFor(state);
+
+    for (const capability of desired) {
       if (this.hasCapability(capability)) continue;
       await this.addCapability(capability)
         .then(() => this.log(`Added ${capability}`))
         .catch((error) => this.error(`Could not add ${capability}`, error));
+    }
+
+    // Fjern capabilities som ikke lenger hører hjemme. Konkret: alarm_motion,
+    // som er erstattet av presence. Uten dette ville den gamle, misvisende
+    // «Bevegelsesalarm»-flisen blitt stående på enheter paret før byttet — og
+    // den sto død, fordi auto_away var fastlåst. capabilitiesFor gir hele det
+    // ønskede settet, så alt utenfor det er trygt å fjerne.
+    for (const capability of this.getCapabilities()) {
+      if (desired.includes(capability)) continue;
+      await this.removeCapability(capability)
+        .then(() => this.log(`Removed ${capability}`))
+        .catch((error) => this.error(`Could not remove ${capability}`, error));
     }
   }
 

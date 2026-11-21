@@ -38,7 +38,7 @@ poll interval.
 | `alarm_battery` | Nest's own `battery_health_state` |
 | `alarm_tamper` | `removed_from_base` |
 | `measure_voltage` | `battery_level`, in volts |
-| `alarm_motion` | mains-powered units only |
+| `presence` (Home) | the house's Home/Away state (`structure.away`), mains-powered units only |
 
 Nest reports three levels per hazard: clear, heads-up, and emergency. Only
 emergency raises the alarm capability. Heads-up is surfaced separately, so a
@@ -49,10 +49,12 @@ without stating what empty means, and an invented percentage scale would look
 more precise than it is. `alarm_battery` carries Nest's own verdict on when it
 matters.
 
-Motion is only exposed on mains-powered units. Battery-powered Protects let the
-PIR sleep, so the field says nothing about the room. Note that even where it is
-exposed, the underlying signal is occupancy with a ten-minute decision window —
-it is not a motion sensor.
+Home is a house-level signal, not motion and not per room. It follows Nest's own
+Home/Away state for the whole home, which Nest decides from phone locations and
+the mains-powered Protects, so only those units carry the tile. Nest waits about
+an hour without activity before switching to Away, and is quick back to Home.
+Flow cards fire when the house becomes Home or Away. Nest sends no real-time
+motion from a Protect through this API.
 
 ## Authentication
 

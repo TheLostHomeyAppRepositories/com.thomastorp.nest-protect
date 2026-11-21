@@ -111,16 +111,19 @@ test('spenning oppgis i volt', () => {
   assert.strictEqual(toCapabilities(parseTopaz(BATTERY_KITCHEN)).measure_voltage, 5.187);
 });
 
-test('bevegelse rapporteres kun for nettdrevne enheter', () => {
-  // Batteridrevne lar PIR-en sove, så auto_away sier ingenting om rommet.
-  // Capabilityen utelates helt i stedet for å stå evig false.
-  assert.ok(!('alarm_motion' in toCapabilities(parseTopaz(BATTERY_KITCHEN))));
+test('Hjemme/Borte er ikke en topaz-capability', () => {
+  // presence settes fra structure.away i device.js, ikke per varsler her.
+  // Hverken home_away_input eller auto_away skal lenger produsere flisen.
+  assert.ok(!('presence' in toCapabilities(parseTopaz(WIRED_HALLWAY))));
+  assert.ok(!('presence' in toCapabilities(parseTopaz(withStatus(WIRED_HALLWAY, { home_away_input: true })))));
+  assert.ok(!('presence' in toCapabilities(parseTopaz(withStatus(WIRED_HALLWAY, { auto_away: false })))));
+});
 
-  const wired = toCapabilities(parseTopaz(WIRED_HALLWAY));
-  assert.strictEqual(wired.alarm_motion, false);
-
-  const occupied = toCapabilities(parseTopaz(withStatus(WIRED_HALLWAY, { auto_away: false })));
-  assert.strictEqual(occupied.alarm_motion, true);
+test('wired skiller nettdrevne fra batteridrevne, for å gate Hjemme-flisen', () => {
+  // device.js gir bare nettdrevne varslere presence-flisen, siden Nest bare
+  // bruker dem i Home/Away-avgjørelsen.
+  assert.strictEqual(parseTopaz(WIRED_HALLWAY).wired, true);
+  assert.strictEqual(parseTopaz(BATTERY_KITCHEN).wired, false);
 });
 
 test('manuell test slår ut mens den pågår', () => {

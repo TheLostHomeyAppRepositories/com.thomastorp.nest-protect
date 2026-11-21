@@ -84,6 +84,10 @@ class NestProtectApp extends Homey.App {
 
     this._client = null;
     this._buckets = [];
+    // Structure-bøtta (Home/Away) og den utledede away-tilstanden. null =
+    // ennå ukjent, så flisen ikke skrives på et gjett.
+    this._structure = null;
+    this._away = null;
     this._whereMap = new Map();
     this._states = new Map();
     // Ukjent, ikke frakoblet. Startet vi med `false`, ville den aller første
@@ -206,6 +210,8 @@ class NestProtectApp extends Homey.App {
     this.log('Settings changed, reconnecting');
     this._client = null;
     this._buckets = [];
+    this._structure = null;
+    this._away = null;
     this._launchedAt = 0;
     this._reauths = 0;
 
@@ -300,9 +306,36 @@ class NestProtectApp extends Homey.App {
     const all = await client.appLaunch();
     this._whereMap = buildWhereMap(all);
     this._buckets = all.filter((b) => String(b.object_key || '').startsWith('topaz.'));
+    // Structure-bøtta holdes for seg: den bærer Home/Away, og må være med i
+    // revisjonslista slik at en Home/Away-endring også vekker subscriben.
+    this._structure = all.find((b) => String(b.object_key || '').startsWith('structure.')) || null;
+    this._captureStructure(all);
     this._launchedAt = Date.now();
     this.log(`Fetched ${this._buckets.length} alarm(s)`);
     this.publish();
+  }
+
+  // Plukker structure-bøtta ut av en samling bøtter og oppdaterer Home/Away.
+  // Feltet `away` er boligens tilstand: true = borte, false = hjemme. Nest
+  // avgjør den fra telefonplassering og de nettdrevne varslernes bevegelse.
+  // Returnerer true hvis away endret seg, slik at løkka vet at enhetene må
+  // oppdateres selv om ingen topaz-bøtte kom med.
+  _captureStructure(buckets) {
+    const structure = (buckets || []).find(
+      (b) => String(b.object_key || '').startsWith('structure.'),
+    );
+    if (!structure || !structure.value) return false;
+    const away = structure.value.away === true;
+    if (this._away === away) return false;
+    this._away = away;
+    this.log(`Home/Away: ${away ? 'Away' : 'Home'}`);
+    return true;
+  }
+
+  // Hjemme/Borte for hele boligen, utledet av structure.away. null til vi har
+  // hørt fra Nest første gang — en flis skal ikke skrives på et gjett.
+  isHome() {
+    return this._away === null ? null : !this._away;
   }
 
   async _listen(client) {
@@ -316,7 +349,11 @@ class NestProtectApp extends Homey.App {
 
     let result;
     try {
-      result = await client.subscribe(subscribeObjects(this._buckets), {
+      // Structure-bøtta er med i revisjonslista slik at en Home/Away-endring
+      // også vekker subscriben — ellers ville Nest aldri fortalt oss at huset
+      // ble borte.
+      const watched = this._structure ? [...this._buckets, this._structure] : this._buckets;
+      result = await client.subscribe(subscribeObjects(watched), {
         signal: this._abort.signal,
       });
     } finally {
@@ -341,8 +378,27 @@ class NestProtectApp extends Homey.App {
     this._reauths = 0;
     if (result.buckets.length === 0) return;
 
-    this._buckets = mergeBuckets(this._buckets, result.buckets);
-    this.log(`${result.buckets.length} change(s) received`);
+    // Skill alarmendringer (topaz) fra Home/Away-endringer (structure). En
+    // Home/Away-endring alene skal også oppdatere enhetene, siden flisen
+    // leses derfra.
+    const topazChanges = result.buckets.filter((b) => String(b.object_key || '').startsWith('topaz.'));
+    const structureChanges = result.buckets.filter((b) => String(b.object_key || '').startsWith('structure.'));
+
+    let awayChanged = false;
+    if (structureChanges.length) {
+      this._structure = mergeBuckets(this._structure ? [this._structure] : [], structureChanges)[0];
+      awayChanged = this._captureStructure(structureChanges);
+    }
+
+    if (topazChanges.length === 0) {
+      // Ingen alarmendring, men ble huset borte/hjemme må flisene oppdateres.
+      if (awayChanged) this.publish();
+      else this.log(`${result.buckets.length} non-alarm change(s) received`);
+      return;
+    }
+
+    this._buckets = mergeBuckets(this._buckets, topazChanges);
+    this.log(`${topazChanges.length} change(s) received`);
     this.publish();
   }
 
@@ -587,6 +643,13 @@ class NestProtectApp extends Homey.App {
     this.homey.flow
       .getActionCard('refresh_now')
       .registerRunListener(() => this.refreshNow());
+
+    // Tilstedeværelse-betingelsen. Enheten velges i kortet; vi leser bare den
+    // valgte varslerens flis. Eksplisitt === true: er flisen ennå ukjent, skal
+    // betingelsen svare «ikke til stede», ikke gi null tilbake.
+    this.homey.flow
+      .getConditionCard('is_present')
+      .registerRunListener((args) => args.device.getCapabilityValue('presence') === true);
 
     // Varselnivået har ingen capability å henge på, siden Homey ikke skiller
     // «nesten» fra «nå». Enheten utløser kortet selv når nivået endrer seg.
