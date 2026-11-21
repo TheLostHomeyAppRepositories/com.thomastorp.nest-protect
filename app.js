@@ -84,10 +84,10 @@ class NestProtectApp extends Homey.App {
 
     this._client = null;
     this._buckets = [];
-    // motion-probe (testbygg): bøtter som ikke er topaz, holdt atskilt fra
-    // alarmbøttene så parsing og publisering er helt uberørt. Brukes bare til
-    // å logge hva occupancy-kanalen sender.
-    this._probe = [];
+    // Structure-bøtta (Home/Away) og den utledede away-tilstanden. null =
+    // ennå ukjent, så flisen ikke skrives på et gjett.
+    this._structure = null;
+    this._away = null;
     this._whereMap = new Map();
     this._states = new Map();
     // Ukjent, ikke frakoblet. Startet vi med `false`, ville den aller første
@@ -210,7 +210,8 @@ class NestProtectApp extends Homey.App {
     this.log('Settings changed, reconnecting');
     this._client = null;
     this._buckets = [];
-    this._probe = [];
+    this._structure = null;
+    this._away = null;
     this._launchedAt = 0;
     this._reauths = 0;
 
@@ -305,56 +306,36 @@ class NestProtectApp extends Homey.App {
     const all = await client.appLaunch();
     this._whereMap = buildWhereMap(all);
     this._buckets = all.filter((b) => String(b.object_key || '').startsWith('topaz.'));
-    this._probe = all.filter((b) => !String(b.object_key || '').startsWith('topaz.')
-      && !String(b.object_key || '').startsWith('where.')
-      && !String(b.object_key || '').startsWith('structure.'));
+    // Structure-bøtta holdes for seg: den bærer Home/Away, og må være med i
+    // revisjonslista slik at en Home/Away-endring også vekker subscriben.
+    this._structure = all.find((b) => String(b.object_key || '').startsWith('structure.')) || null;
+    this._captureStructure(all);
     this._launchedAt = Date.now();
     this.log(`Fetched ${this._buckets.length} alarm(s)`);
-    this._logProbe('launch', all);
     this.publish();
   }
 
-  // motion-probe (testbygg): logger alt occupancy-kanalen sender, og hvordan
-  // auto_away/home_away_input på hver varsler ser ut akkurat nå. Går man rundt
-  // i huset og ser ett av disse flippe i sanntid i loggen, finnes signalet —
-  // da kan det mappes. Skjer ingenting mens pathlighten tenner lokalt, er
-  // beviset at Nest ikke sender bevegelse i det hele tatt.
-  _logProbe(phase, buckets) {
-    for (const bucket of buckets) {
-      const key = String(bucket.object_key || '');
-      const value = bucket.value || {};
-      if (!key.startsWith('topaz.') && !key.startsWith('where.') && !key.startsWith('structure.')) {
-        this.log(`[motion-probe] ${phase} ${key} rev=${bucket.object_revision} `
-          + `value=${JSON.stringify(value)}`);
-        // En occupancy-bøtte som i det hele tatt endrer seg er selve funnet vi
-        // leter etter — vis den på tidslinjen uansett fase.
-        this._notifyProbe(`occupancy ${key}: ${JSON.stringify(value).slice(0, 180)}`);
-      }
-      if (key.startsWith('topaz.')) {
-        this.log(`[motion-probe] ${phase} ${key} auto_away=${value.auto_away} `
-          + `home_away_input=${value.home_away_input} `
-          + `wired_or_battery=${value.wired_or_battery} line_power=${value.line_power_present}`);
-        // Tidslinjen er den eneste live-kanalen uten Docker eller rapportknapp.
-        // Launch legger ut utgangspunktet én gang; så er det bare endringer —
-        // altså det som skjer når noen går forbi varsleren — som vises, så den
-        // ikke flommer over.
-        const label = value.description || key.replace('topaz.', '');
-        this._notifyProbe(`${phase === 'launch' ? 'start ' : ''}${label}: `
-          + `auto_away=${value.auto_away} home_away_input=${value.home_away_input}`);
-      }
-    }
+  // Plukker structure-bøtta ut av en samling bøtter og oppdaterer Home/Away.
+  // Feltet `away` er boligens tilstand: true = borte, false = hjemme. Nest
+  // avgjør den fra telefonplassering og de nettdrevne varslernes bevegelse.
+  // Returnerer true hvis away endret seg, slik at løkka vet at enhetene må
+  // oppdateres selv om ingen topaz-bøtte kom med.
+  _captureStructure(buckets) {
+    const structure = (buckets || []).find(
+      (b) => String(b.object_key || '').startsWith('structure.'),
+    );
+    if (!structure || !structure.value) return false;
+    const away = structure.value.away === true;
+    if (this._away === away) return false;
+    this._away = away;
+    this.log(`Home/Away: ${away ? 'Away' : 'Home'}`);
+    return true;
   }
 
-  // Skriver en linje til Homey-tidslinjen. Bare for probe-testbygget; feiler
-  // den (gammel firmware uten notifications-API), logges det og appen går
-  // videre som om ingenting.
-  _notifyProbe(text) {
-    try {
-      this.homey.notifications.createNotification({ excerpt: `[motion-probe] ${text}` })
-        .catch((error) => this.log('[motion-probe] tidslinje feilet', error.message));
-    } catch (error) {
-      this.log('[motion-probe] tidslinje ikke tilgjengelig', error.message);
-    }
+  // Hjemme/Borte for hele boligen, utledet av structure.away. null til vi har
+  // hørt fra Nest første gang — en flis skal ikke skrives på et gjett.
+  isHome() {
+    return this._away === null ? null : !this._away;
   }
 
   async _listen(client) {
@@ -368,10 +349,11 @@ class NestProtectApp extends Homey.App {
 
     let result;
     try {
-      // motion-probe (testbygg): occupancy-bøttene er med i revisjonslista slik
-      // at en endring der også vekker subscriben. Uten det ville Nest aldri
-      // fortalt oss at de endret seg.
-      result = await client.subscribe(subscribeObjects([...this._buckets, ...this._probe]), {
+      // Structure-bøtta er med i revisjonslista slik at en Home/Away-endring
+      // også vekker subscriben — ellers ville Nest aldri fortalt oss at huset
+      // ble borte.
+      const watched = this._structure ? [...this._buckets, this._structure] : this._buckets;
+      result = await client.subscribe(subscribeObjects(watched), {
         signal: this._abort.signal,
       });
     } finally {
@@ -396,17 +378,22 @@ class NestProtectApp extends Homey.App {
     this._reauths = 0;
     if (result.buckets.length === 0) return;
 
-    // motion-probe (testbygg): skill alarmendringer fra occupancy-endringer.
-    // Bare topaz skal inn i _buckets og utløse publish; resten logges.
+    // Skill alarmendringer (topaz) fra Home/Away-endringer (structure). En
+    // Home/Away-endring alene skal også oppdatere enhetene, siden flisen
+    // leses derfra.
     const topazChanges = result.buckets.filter((b) => String(b.object_key || '').startsWith('topaz.'));
-    const probeChanges = result.buckets.filter((b) => this._probe.some(
-      (p) => p.object_key === b.object_key,
-    ));
-    if (probeChanges.length) this._probe = mergeBuckets(this._probe, probeChanges);
-    this._logProbe('change', result.buckets);
+    const structureChanges = result.buckets.filter((b) => String(b.object_key || '').startsWith('structure.'));
+
+    let awayChanged = false;
+    if (structureChanges.length) {
+      this._structure = mergeBuckets(this._structure ? [this._structure] : [], structureChanges)[0];
+      awayChanged = this._captureStructure(structureChanges);
+    }
 
     if (topazChanges.length === 0) {
-      this.log(`${result.buckets.length} non-alarm change(s) received`);
+      // Ingen alarmendring, men ble huset borte/hjemme må flisene oppdateres.
+      if (awayChanged) this.publish();
+      else this.log(`${result.buckets.length} non-alarm change(s) received`);
       return;
     }
 

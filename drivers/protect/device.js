@@ -76,11 +76,6 @@ class ProtectDevice extends Homey.Device {
 
     const caps = toCapabilities(state);
 
-    // Fanges før skrivingen: flow-kortene for tilstedeværelse skal fyre på
-    // selve overgangen, ikke på hver avlesning som bekrefter samme verdi.
-    const presenceBefore = this.hasCapability('presence')
-      ? this.getCapabilityValue('presence') : null;
-
     for (const [capability, value] of Object.entries(caps)) {
       if (!this.hasCapability(capability)) continue;
       // Homey stempler bare når verdien faktisk endrer seg, så det koster
@@ -89,7 +84,18 @@ class ProtectDevice extends Homey.Device {
         .catch((error) => this.error(`Could not set ${capability}`, error));
     }
 
-    this._firePresence(presenceBefore, caps.presence);
+    // Hjemme/Borte er hus-nivå (structure.away), ikke et topaz-felt — derfor
+    // leses det her fra appen, ikke fra caps. Bare nettdrevne varslere har
+    // flisen (Nest bruker bare dem til Home/Away-deteksjon). null = ennå ukjent.
+    if (state.wired && this.hasCapability('presence')) {
+      const home = this.homey.app.isHome();
+      if (home !== null) {
+        const before = this.getCapabilityValue('presence');
+        await this.setCapabilityValue('presence', home)
+          .catch((error) => this.error('Could not set presence', error));
+        this._firePresence(before, home);
+      }
+    }
 
     await this._applyWarnings(state);
     await this._applyInfo(state);

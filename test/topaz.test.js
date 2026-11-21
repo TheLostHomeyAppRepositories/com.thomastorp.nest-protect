@@ -111,25 +111,19 @@ test('spenning oppgis i volt', () => {
   assert.strictEqual(toCapabilities(parseTopaz(BATTERY_KITCHEN)).measure_voltage, 5.187);
 });
 
-test('tilstedeværelse rapporteres kun for nettdrevne enheter', () => {
-  // Batteridrevne lar sensoren sove, så home_away_input sier ingenting om
-  // rommet. Capabilityen utelates helt i stedet for å stå evig false.
-  assert.ok(!('presence' in toCapabilities(parseTopaz(BATTERY_KITCHEN))));
-
-  // home_away_input false på et tomt rom.
-  const wired = toCapabilities(parseTopaz(WIRED_HALLWAY));
-  assert.strictEqual(wired.presence, false);
-
-  // true i det noen er til stede ved varsleren.
-  const occupied = toCapabilities(parseTopaz(withStatus(WIRED_HALLWAY, { home_away_input: true })));
-  assert.strictEqual(occupied.presence, true);
+test('Hjemme/Borte er ikke en topaz-capability', () => {
+  // presence settes fra structure.away i device.js, ikke per varsler her.
+  // Hverken home_away_input eller auto_away skal lenger produsere flisen.
+  assert.ok(!('presence' in toCapabilities(parseTopaz(WIRED_HALLWAY))));
+  assert.ok(!('presence' in toCapabilities(parseTopaz(withStatus(WIRED_HALLWAY, { home_away_input: true })))));
+  assert.ok(!('presence' in toCapabilities(parseTopaz(withStatus(WIRED_HALLWAY, { auto_away: false })))));
 });
 
-test('tilstedeværelse leser home_away_input, ikke det fastlåste auto_away', () => {
-  // auto_away sto fast på «borte» i månedsvis selv med folk hjemme (verifisert
-  // 2026-11-21). Endrer vi bare auto_away, skal tilstedeværelsen IKKE røre seg.
-  const stuck = toCapabilities(parseTopaz(withStatus(WIRED_HALLWAY, { auto_away: false })));
-  assert.strictEqual(stuck.presence, false, 'auto_away skal ikke lenger styre flisen');
+test('wired skiller nettdrevne fra batteridrevne, for å gate Hjemme-flisen', () => {
+  // device.js gir bare nettdrevne varslere presence-flisen, siden Nest bare
+  // bruker dem i Home/Away-avgjørelsen.
+  assert.strictEqual(parseTopaz(WIRED_HALLWAY).wired, true);
+  assert.strictEqual(parseTopaz(BATTERY_KITCHEN).wired, false);
 });
 
 test('manuell test slår ut mens den pågår', () => {
