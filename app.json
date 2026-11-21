@@ -97,6 +97,26 @@
         "no": "Manuell test avsluttet"
       },
       "icon": "/assets/capability-icons/manual-test.svg"
+    },
+    "presence": {
+      "type": "boolean",
+      "title": {
+        "en": "Presence",
+        "no": "Tilstedeværelse"
+      },
+      "uiComponent": "sensor",
+      "getable": true,
+      "setable": false,
+      "insights": true,
+      "insightsTitleTrue": {
+        "en": "Presence detected",
+        "no": "Tilstedeværelse registrert"
+      },
+      "insightsTitleFalse": {
+        "en": "No presence",
+        "no": "Ingen til stede"
+      },
+      "icon": "/assets/capability-icons/presence.svg"
     }
   },
   "api": {

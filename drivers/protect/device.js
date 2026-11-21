@@ -105,11 +105,25 @@ class ProtectDevice extends Homey.Device {
   // at du må fjerne og pare dem på nytt — det ville tatt med seg flowene de
   // er brukt i.
   async _migrate(state) {
-    for (const capability of capabilitiesFor(state)) {
+    const desired = capabilitiesFor(state);
+
+    for (const capability of desired) {
       if (this.hasCapability(capability)) continue;
       await this.addCapability(capability)
         .then(() => this.log(`Added ${capability}`))
         .catch((error) => this.error(`Could not add ${capability}`, error));
+    }
+
+    // Fjern capabilities som ikke lenger hører hjemme. Konkret: alarm_motion,
+    // som er erstattet av presence. Uten dette ville den gamle, misvisende
+    // «Bevegelsesalarm»-flisen blitt stående på enheter paret før byttet — og
+    // den sto død, fordi auto_away var fastlåst. capabilitiesFor gir hele det
+    // ønskede settet, så alt utenfor det er trygt å fjerne.
+    for (const capability of this.getCapabilities()) {
+      if (desired.includes(capability)) continue;
+      await this.removeCapability(capability)
+        .then(() => this.log(`Removed ${capability}`))
+        .catch((error) => this.error(`Could not remove ${capability}`, error));
     }
   }
 

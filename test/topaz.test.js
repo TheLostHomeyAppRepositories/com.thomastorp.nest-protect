@@ -111,16 +111,25 @@ test('spenning oppgis i volt', () => {
   assert.strictEqual(toCapabilities(parseTopaz(BATTERY_KITCHEN)).measure_voltage, 5.187);
 });
 
-test('bevegelse rapporteres kun for nettdrevne enheter', () => {
-  // Batteridrevne lar PIR-en sove, så auto_away sier ingenting om rommet.
-  // Capabilityen utelates helt i stedet for å stå evig false.
-  assert.ok(!('alarm_motion' in toCapabilities(parseTopaz(BATTERY_KITCHEN))));
+test('tilstedeværelse rapporteres kun for nettdrevne enheter', () => {
+  // Batteridrevne lar sensoren sove, så home_away_input sier ingenting om
+  // rommet. Capabilityen utelates helt i stedet for å stå evig false.
+  assert.ok(!('presence' in toCapabilities(parseTopaz(BATTERY_KITCHEN))));
 
+  // home_away_input false på et tomt rom.
   const wired = toCapabilities(parseTopaz(WIRED_HALLWAY));
-  assert.strictEqual(wired.alarm_motion, false);
+  assert.strictEqual(wired.presence, false);
 
-  const occupied = toCapabilities(parseTopaz(withStatus(WIRED_HALLWAY, { auto_away: false })));
-  assert.strictEqual(occupied.alarm_motion, true);
+  // true i det noen er til stede ved varsleren.
+  const occupied = toCapabilities(parseTopaz(withStatus(WIRED_HALLWAY, { home_away_input: true })));
+  assert.strictEqual(occupied.presence, true);
+});
+
+test('tilstedeværelse leser home_away_input, ikke det fastlåste auto_away', () => {
+  // auto_away sto fast på «borte» i månedsvis selv med folk hjemme (verifisert
+  // 2026-11-21). Endrer vi bare auto_away, skal tilstedeværelsen IKKE røre seg.
+  const stuck = toCapabilities(parseTopaz(withStatus(WIRED_HALLWAY, { auto_away: false })));
+  assert.strictEqual(stuck.presence, false, 'auto_away skal ikke lenger styre flisen');
 });
 
 test('manuell test slår ut mens den pågår', () => {

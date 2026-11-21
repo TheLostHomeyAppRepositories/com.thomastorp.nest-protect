@@ -326,12 +326,34 @@ class NestProtectApp extends Homey.App {
       if (!key.startsWith('topaz.') && !key.startsWith('where.') && !key.startsWith('structure.')) {
         this.log(`[motion-probe] ${phase} ${key} rev=${bucket.object_revision} `
           + `value=${JSON.stringify(value)}`);
+        // En occupancy-bøtte som i det hele tatt endrer seg er selve funnet vi
+        // leter etter — vis den på tidslinjen uansett fase.
+        this._notifyProbe(`occupancy ${key}: ${JSON.stringify(value).slice(0, 180)}`);
       }
       if (key.startsWith('topaz.')) {
         this.log(`[motion-probe] ${phase} ${key} auto_away=${value.auto_away} `
           + `home_away_input=${value.home_away_input} `
           + `wired_or_battery=${value.wired_or_battery} line_power=${value.line_power_present}`);
+        // Tidslinjen er den eneste live-kanalen uten Docker eller rapportknapp.
+        // Launch legger ut utgangspunktet én gang; så er det bare endringer —
+        // altså det som skjer når noen går forbi varsleren — som vises, så den
+        // ikke flommer over.
+        const label = value.description || key.replace('topaz.', '');
+        this._notifyProbe(`${phase === 'launch' ? 'start ' : ''}${label}: `
+          + `auto_away=${value.auto_away} home_away_input=${value.home_away_input}`);
       }
+    }
+  }
+
+  // Skriver en linje til Homey-tidslinjen. Bare for probe-testbygget; feiler
+  // den (gammel firmware uten notifications-API), logges det og appen går
+  // videre som om ingenting.
+  _notifyProbe(text) {
+    try {
+      this.homey.notifications.createNotification({ excerpt: `[motion-probe] ${text}` })
+        .catch((error) => this.log('[motion-probe] tidslinje feilet', error.message));
+    } catch (error) {
+      this.log('[motion-probe] tidslinje ikke tilgjengelig', error.message);
     }
   }
 

@@ -16,6 +16,7 @@ const WIRED_HALLWAY = {
   value: {
     auto_away: true,
     auto_away_decision_time_secs: 600,
+    home_away_input: false,
     battery_health_state: 0,
     battery_level: 5257,
     capability_level: 2,
@@ -63,6 +64,7 @@ const BATTERY_KITCHEN = {
   value: {
     auto_away: true,
     auto_away_decision_time_secs: 600,
+    home_away_input: false,
     battery_health_state: 0,
     battery_level: 5187,
     capability_level: 2,
